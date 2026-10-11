@@ -1,0 +1,7 @@
+{
+  "name": "Errwise",
+  "packageManager": "yarn@4.18.0",
+  "devDependencies": {
+    "turbo": "^2.11.7"
+  }
+}
