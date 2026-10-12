@@ -27,16 +27,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: yarn
 
       - name: Enable Corepack
         run: corepack enable
 
       - name: Install dependencies
-        run: yarn install --immutable
+        run: yarn install
+        env:
+          YARN_ENABLE_HARDENED_MODE: false
 
       - name: Check formatting
-        run: yarn workspace @errwise/api exec prettier --check "src/**/*.ts"
+        run: yarn workspace api exec prettier --check "src/**/*.ts"
 
       - name: Lint
         run: yarn lint
