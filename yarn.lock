@@ -590,6 +590,7 @@ __metadata:
     "@types/express": "npm:^5.0.0"
     "@types/jest": "npm:^30.0.0"
     "@types/node": "npm:^24.0.0"
+    "@types/nodemailer": "npm:^8.0.2"
     "@types/supertest": "npm:^7.0.0"
     bcryptjs: "npm:^3.0.3"
     cookie-parser: "npm:^1.4.7"
@@ -599,6 +600,7 @@ __metadata:
     globals: "npm:^17.0.0"
     helmet: "npm:^8.3.0"
     jest: "npm:^30.0.0"
+    nodemailer: "npm:^10.1.1"
     prettier: "npm:^3.9.10"
     prisma: "npm:^6.19.3"
     reflect-metadata: "npm:^0.2.2"
@@ -3267,6 +3269,15 @@ __metadata:
   dependencies:
     undici-types: "npm:>=7.24.0 <7.24.7"
   checksum: 10c0/b51a7f8854007ad579dffdd0633d8addbfeb2c97cceb380f2eba0ed163638ec52e17565385a6cc04d54ac4ff99c70c64aee68a4ca45b6128c035e828794e29c5
+  languageName: node
+  linkType: hard
+
+"@types/nodemailer@npm:^8.0.2":
+  version: 8.0.2
+  resolution: "@types/nodemailer@npm:8.0.2"
+  dependencies:
+    "@types/node": "npm:*"
+  checksum: 10c0/1ad3f83ac130cf9af65ce9eb7985b08b27b4723316c2be621522effc31c63d7d2d76880815490499fbe8b1aff3da889d24b54b3db892526d1166b12702404ff0
   languageName: node
   linkType: hard
 
@@ -8834,6 +8845,13 @@ __metadata:
   version: 2.0.58
   resolution: "node-releases@npm:2.0.58"
   checksum: 10c0/aeb21a36f273d2294a97bb09d536c8b2c42b56ad309524ff940735d29fc658dd58c29700602ae502ebd16a8fd6ecda31fcec0243bc7480b5bbd991bf9ff113d5
+  languageName: node
+  linkType: hard
+
+"nodemailer@npm:^10.1.1":
+  version: 10.1.1
+  resolution: "nodemailer@npm:10.1.1"
+  checksum: 10c0/1906b51e3f40f97acc7b5990b721a54581541e543117d3ff22255a173c4b7cc4a77212195b56ae2f69ecc021885d30714c5f7a2f05396b66e2ae4a7b864a87ae
   languageName: node
   linkType: hard
 

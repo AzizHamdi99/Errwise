@@ -15,6 +15,8 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { APP_FILTER } from '@nestjs/core';
 import { PrismaModule } from './database/prisma.module';
 import { SecurityModule } from './common/security/security.module';
+import { InvitationsModule } from './modules/invitations/invitations.module';
+import { MailModule } from './modules/mail/mail.module';
 
 @Module({
   imports: [
@@ -29,6 +31,8 @@ import { SecurityModule } from './common/security/security.module';
     EventsModule,
     IssuesModule,
     SecurityModule,
+    InvitationsModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [
