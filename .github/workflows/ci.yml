@@ -37,7 +37,7 @@ jobs:
           YARN_ENABLE_HARDENED_MODE: false
 
       - name: Check formatting
-        run: yarn workspace api exec prettier --check "src/**/*.ts"
+        run: yarn workspace @errwise/api exec prettier --check "src/**/*.ts"
 
       - name: Lint
         run: yarn lint
