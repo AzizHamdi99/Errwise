@@ -13,6 +13,8 @@ import { ConfigModule } from '@nestjs/config';
 import { validateEnv } from './config/env';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { APP_FILTER } from '@nestjs/core';
+import { PrismaModule } from './database/prisma.module';
+import { SecurityModule } from './common/security/security.module';
 
 @Module({
   imports: [
@@ -23,9 +25,11 @@ import { APP_FILTER } from '@nestjs/core';
     OrganizationsModule,
     MembershipsModule,
     ProjectsModule,
+    PrismaModule,
     ApiKeysModule,
     EventsModule,
     IssuesModule,
+    SecurityModule,
   ],
   controllers: [AppController],
   providers: [
