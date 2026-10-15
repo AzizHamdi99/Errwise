@@ -8,14 +8,19 @@
   ],
   "scripts": {
     "dev": "turbo run dev",
-    "dev:web": "yarn workspace web dev",
-    "dev:api": "yarn workspace api start:dev",
+    "dev:web": "yarn workspace @errwise/web dev",
+    "dev:api": "yarn workspace @errwise/api start:dev",
     "build": "turbo run build",
     "build:web": "yarn workspace @errwise/web build",
     "build:api": "yarn workspace @errwise/api build",
     "lint": "turbo run lint",
     "db:up": "docker compose up -d",
-    "db:down": "docker compose down"
+    "db:down": "docker compose down",
+    "db:migrate": "yarn workspace @errwise/api prisma migrate dev",
+    "db:studio": "yarn workspace @errwise/api prisma studio",
+    "db:generate": "yarn workspace @errwise/api prisma generate",
+    "db:status": "yarn workspace @errwise/api prisma migrate status",
+    "db:reset": "yarn workspace @errwise/api prisma migrate reset"
   },
   "devDependencies": {
     "turbo": "^2.11.7"
