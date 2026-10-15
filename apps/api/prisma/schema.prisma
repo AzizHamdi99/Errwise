@@ -1,15 +1,123 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id              String       @id @default(uuid(7)) @db.Uuid
+  email           String       @unique
+  name            String?
+  passwordHash    String?
+  emailVerifiedAt DateTime?    @db.Timestamptz(3)
+  lastLoginAt     DateTime?    @db.Timestamptz(3)
+  createdAt       DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime     @updatedAt @db.Timestamptz(3)
+  memberships     Membership[]
+}
+
+model Organization {
+  id        String       @id @default(uuid(7)) @db.Uuid
+  name      String
+  slug      String       @unique
+  createdAt DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime     @updatedAt @db.Timestamptz(3)
+  deletedAt DateTime?    @db.Timestamptz(3)
+  members   Membership[]
+  projects  Project[]
+}
+
+model Membership {
+  userId         String       @db.Uuid
+  organizationId String       @db.Uuid
+  role           String       @default("member")
+  createdAt      DateTime     @default(now()) @db.Timestamptz(3)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@id([userId, organizationId])
+  @@index([organizationId])
+}
+
+model Project {
+  id             String       @id @default(uuid(7)) @db.Uuid
+  organizationId String       @db.Uuid
+  name           String
+  slug           String
+  platform       String       @default("node")
+  retentionDays  Int          @default(30)
+  createdAt      DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime     @updatedAt @db.Timestamptz(3)
+  deletedAt      DateTime?    @db.Timestamptz(3)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  apiKeys        ApiKey[]
+  issues         Issue[]
+  events         Event[]
+
+  @@unique([organizationId, slug])
+}
+
+model ApiKey {
+  id         String    @id @default(uuid(7)) @db.Uuid
+  projectId  String    @db.Uuid
+  name       String
+  kind       String    @default("ingest")
+  prefix     String
+  keyHash    String    @unique
+  lastUsedAt DateTime? @db.Timestamptz(3)
+  revokedAt  DateTime? @db.Timestamptz(3)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(3)
+  project    Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model Issue {
+  id                 String    @id @default(uuid(7)) @db.Uuid
+  projectId          String    @db.Uuid
+  fingerprint        String
+  fingerprintVersion Int       @default(1)
+  title              String
+  type               String?
+  level              String    @default("error")
+  status             String    @default("unresolved")
+  eventCount         Int       @default(0)
+  firstSeenAt        DateTime  @db.Timestamptz(3)
+  lastSeenAt         DateTime  @db.Timestamptz(3)
+  firstRelease       String?
+  lastRelease        String?
+  resolvedAt         DateTime? @db.Timestamptz(3)
+  project            Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  events             Event[]
+
+  @@unique([projectId, fingerprint])
+  @@index([projectId, status, lastSeenAt(sort: Desc)])
+}
+
+model Event {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  eventId     String   @db.Uuid
+  projectId   String   @db.Uuid
+  issueId     String   @db.Uuid
+  level       String   @default("error")
+  type        String?
+  message     String
+  stack       String?
+  platform    String   @default("node")
+  environment String   @default("production")
+  release     String?
+  sdk         String?
+  context     Json?
+  timestamp   DateTime @db.Timestamptz(3)
+  receivedAt  DateTime @default(now()) @db.Timestamptz(3)
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  issue       Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, eventId])
+  @@index([issueId, timestamp(sort: Desc)])
+  @@index([projectId, timestamp(sort: Desc)])
 }

@@ -569,6 +569,46 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@errwise/api@workspace:apps/api":
+  version: 0.0.0-use.local
+  resolution: "@errwise/api@workspace:apps/api"
+  dependencies:
+    "@eslint/eslintrc": "npm:^3.2.0"
+    "@eslint/js": "npm:^9.18.0"
+    "@nestjs/cli": "npm:^11.0.0"
+    "@nestjs/common": "npm:^11.0.1"
+    "@nestjs/config": "npm:^4.0.4"
+    "@nestjs/core": "npm:^11.0.1"
+    "@nestjs/mapped-types": "npm:*"
+    "@nestjs/platform-express": "npm:^11.0.1"
+    "@nestjs/schematics": "npm:^11.0.0"
+    "@nestjs/testing": "npm:^11.0.1"
+    "@prisma/client": "npm:^6.19.3"
+    "@types/express": "npm:^5.0.0"
+    "@types/jest": "npm:^30.0.0"
+    "@types/node": "npm:^24.0.0"
+    "@types/supertest": "npm:^7.0.0"
+    eslint: "npm:^9.18.0"
+    eslint-config-prettier: "npm:^10.0.1"
+    eslint-plugin-prettier: "npm:^5.2.2"
+    globals: "npm:^17.0.0"
+    jest: "npm:^30.0.0"
+    prettier: "npm:^3.9.10"
+    prisma: "npm:^6.19.3"
+    reflect-metadata: "npm:^0.2.2"
+    rxjs: "npm:^7.8.1"
+    source-map-support: "npm:^0.5.21"
+    supertest: "npm:^7.0.0"
+    ts-jest: "npm:^29.2.5"
+    ts-loader: "npm:^9.5.2"
+    ts-node: "npm:^10.9.2"
+    tsconfig-paths: "npm:^4.2.0"
+    typescript: "npm:^5.7.3"
+    typescript-eslint: "npm:^8.20.0"
+    zod: "npm:^3.25"
+  languageName: unknown
+  linkType: soft
+
 "@errwise/sdk@workspace:packages/sdk":
   version: 0.0.0-use.local
   resolution: "@errwise/sdk@workspace:packages/sdk"
@@ -584,6 +624,24 @@ __metadata:
   dependencies:
     "@eslint/js": "npm:^10.0.1"
     eslint: "npm:^10.12.0"
+  languageName: unknown
+  linkType: soft
+
+"@errwise/web@workspace:apps/web":
+  version: 0.0.0-use.local
+  resolution: "@errwise/web@workspace:apps/web"
+  dependencies:
+    "@tailwindcss/turbopack": "npm:^4"
+    "@types/node": "npm:^20"
+    "@types/react": "npm:^19"
+    "@types/react-dom": "npm:^19"
+    eslint: "npm:^9"
+    eslint-config-next: "npm:16.4.0"
+    next: "npm:16.4.0"
+    react: "npm:19.3.0"
+    react-dom: "npm:19.3.0"
+    tailwindcss: "npm:^4"
+    typescript: "npm:^5"
   languageName: unknown
   linkType: soft
 
@@ -3505,46 +3563,6 @@ __metadata:
   checksum: 10c0/57b06ae984bc32a0d22592c87384cd88fe4511b1dd7581497831c56d41939c8a001b28e7b853e1450f2bf61992dfcaa8ae2d0d161a0a90c4fb631ef07098fbac
   languageName: node
   linkType: hard
-
-"api@workspace:apps/api":
-  version: 0.0.0-use.local
-  resolution: "api@workspace:apps/api"
-  dependencies:
-    "@eslint/eslintrc": "npm:^3.2.0"
-    "@eslint/js": "npm:^9.18.0"
-    "@nestjs/cli": "npm:^11.0.0"
-    "@nestjs/common": "npm:^11.0.1"
-    "@nestjs/config": "npm:^4.0.4"
-    "@nestjs/core": "npm:^11.0.1"
-    "@nestjs/mapped-types": "npm:*"
-    "@nestjs/platform-express": "npm:^11.0.1"
-    "@nestjs/schematics": "npm:^11.0.0"
-    "@nestjs/testing": "npm:^11.0.1"
-    "@prisma/client": "npm:^6.19.3"
-    "@types/express": "npm:^5.0.0"
-    "@types/jest": "npm:^30.0.0"
-    "@types/node": "npm:^24.0.0"
-    "@types/supertest": "npm:^7.0.0"
-    eslint: "npm:^9.18.0"
-    eslint-config-prettier: "npm:^10.0.1"
-    eslint-plugin-prettier: "npm:^5.2.2"
-    globals: "npm:^17.0.0"
-    jest: "npm:^30.0.0"
-    prettier: "npm:^3.9.10"
-    prisma: "npm:^6.19.3"
-    reflect-metadata: "npm:^0.2.2"
-    rxjs: "npm:^7.8.1"
-    source-map-support: "npm:^0.5.21"
-    supertest: "npm:^7.0.0"
-    ts-jest: "npm:^29.2.5"
-    ts-loader: "npm:^9.5.2"
-    ts-node: "npm:^10.9.2"
-    tsconfig-paths: "npm:^4.2.0"
-    typescript: "npm:^5.7.3"
-    typescript-eslint: "npm:^8.20.0"
-    zod: "npm:^3.25"
-  languageName: unknown
-  linkType: soft
 
 "append-field@npm:^1.0.0":
   version: 1.0.0
@@ -10010,24 +10028,6 @@ __metadata:
   checksum: 10c0/5b61ca583a95e2dd85d7078400190efd452e05751a64accb8c06ce4db65d7e0b0cde9917d705e826a2e05cc2548f61efde115ffa374c3e436d04be45c889e5b4
   languageName: node
   linkType: hard
-
-"web@workspace:apps/web":
-  version: 0.0.0-use.local
-  resolution: "web@workspace:apps/web"
-  dependencies:
-    "@tailwindcss/turbopack": "npm:^4"
-    "@types/node": "npm:^20"
-    "@types/react": "npm:^19"
-    "@types/react-dom": "npm:^19"
-    eslint: "npm:^9"
-    eslint-config-next: "npm:16.4.0"
-    next: "npm:16.4.0"
-    react: "npm:19.3.0"
-    react-dom: "npm:19.3.0"
-    tailwindcss: "npm:^4"
-    typescript: "npm:^5"
-  languageName: unknown
-  linkType: soft
 
 "webpack-node-externals@npm:3.0.0":
   version: 3.0.0
