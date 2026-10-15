@@ -1,24 +1,28 @@
 import { z } from 'zod';
 
-const envSchema = z.object({
-  API_PORT: z.coerce.number().int().positive().default(4000),
+export const envSchema = z.object({
+  NODE_ENV: z
+    .enum(['development', 'test', 'production'])
+    .default('development'),
+  API_PORT: z.coerce.number().default(4000),
   DATABASE_URL: z.string().url(),
-  DIRECT_URL: z.string().url().optional(),
-  JWT_SECRET: z.string().min(16, 'must be at least 16 characters'),
+  DIRECT_URL: z.string().url(),
+  JWT_SECRET: z.string().min(16),
+  ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().positive().default(900),
+  REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(30),
+  BCRYPT_ROUNDS: z.coerce.number().int().min(10).max(15).default(12),
+  WEB_URL: z.string().url().default('http://localhost:3000'),
 });
 
 export type Env = z.infer<typeof envSchema>;
 
-// Called once at startup: the API refuses to start if the .env file is wrong
-export function validateEnv(config: Record<string, unknown>): Env {
-  const result = envSchema.safeParse(config);
-
-  if (!result.success) {
-    const problems = result.error.issues.map(
-      (issue) => `  - ${issue.path.join('.')}: ${issue.message}`,
-    );
-    throw new Error(`Invalid environment variables:\n${problems.join('\n')}`);
+export function validateEnv(raw: Record<string, unknown>): Env {
+  const parsed = envSchema.safeParse(raw);
+  if (!parsed.success) {
+    const details = parsed.error.issues
+      .map((i) => `${i.path.join('.')}: ${i.message}`)
+      .join('\n');
+    throw new Error(`Invalid environment variables:\n${details}`);
   }
-
-  return result.data;
+  return parsed.data;
 }

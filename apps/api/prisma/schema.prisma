@@ -13,6 +13,7 @@ model User {
   email           String       @unique
   name            String?
   passwordHash    String?
+  refreshTokens RefreshToken[]
   emailVerifiedAt DateTime?    @db.Timestamptz(3)
   lastLoginAt     DateTime?    @db.Timestamptz(3)
   createdAt       DateTime     @default(now()) @db.Timestamptz(3)
@@ -59,6 +60,22 @@ model Project {
   events         Event[]
 
   @@unique([organizationId, slug])
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid(7)) @db.Uuid
+  userId    String    @db.Uuid
+  familyId  String    @db.Uuid
+  tokenHash String    @unique
+  expiresAt DateTime  @db.Timestamptz(3)
+  revokedAt DateTime? @db.Timestamptz(3)
+  userAgent String?
+  ip        String?
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
 }
 
 model ApiKey {

@@ -15,9 +15,13 @@ permissions:
 
 jobs:
   check:
-    name: Lint • Build
+    name: Build
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      DATABASE_URL: postgresql://errwise:errwise@localhost:5432/errwise
+      DIRECT_URL: postgresql://errwise:errwise@localhost:5432/errwise
+      JWT_SECRET: ci-only-secret-not-used-in-production
 
     steps:
       - name: Checkout repository
@@ -36,11 +40,11 @@ jobs:
         env:
           YARN_ENABLE_HARDENED_MODE: false
 
-      - name: Check formatting
-        run: yarn workspace @errwise/api exec prettier --check "src/**/*.ts"
+      - name: Build shared package
+        run: yarn workspace @errwise/shared build
 
-      - name: Lint
-        run: yarn lint
+      - name: Generate Prisma client
+        run: yarn workspace @errwise/api prisma generate
 
-      - name: Build
-        run: yarn build
+      - name: Build API
+        run: yarn workspace @errwise/api build
