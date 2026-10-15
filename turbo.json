@@ -1,5 +1,6 @@
 {
   "$schema": "https://turborepo.com/schema.json",
+  "globalPassThroughEnv": ["DATABASE_URL", "DIRECT_URL", "JWT_SECRET"],
   "tasks": {
     "generate": { "cache": false },
     "build": {
