@@ -19,7 +19,6 @@ import { SecurityModule } from './common/security/security.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
-
     AuthModule,
     UsersModule,
     OrganizationsModule,
