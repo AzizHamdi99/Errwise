@@ -13,6 +13,7 @@ model User {
   email           String       @unique
   name            String?
   passwordHash    String?
+  invitationsSent Invitation[] @relation("InvitationInviter")
   refreshTokens RefreshToken[]
   emailVerifiedAt DateTime?    @db.Timestamptz(3)
   lastLoginAt     DateTime?    @db.Timestamptz(3)
@@ -25,6 +26,7 @@ model Organization {
   id        String       @id @default(uuid(7)) @db.Uuid
   name      String
   slug      String       @unique
+  invitations Invitation[]
   createdAt DateTime     @default(now()) @db.Timestamptz(3)
   updatedAt DateTime     @updatedAt @db.Timestamptz(3)
   deletedAt DateTime?    @db.Timestamptz(3)
@@ -60,6 +62,23 @@ model Project {
   events         Event[]
 
   @@unique([organizationId, slug])
+}
+model Invitation {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  organizationId String    @db.Uuid
+  email          String
+  role           String    @default("member")
+  tokenHash      String    @unique
+  invitedById    String?   @db.Uuid
+  expiresAt      DateTime  @db.Timestamptz(3)
+  acceptedAt     DateTime? @db.Timestamptz(3)
+  revokedAt      DateTime? @db.Timestamptz(3)
+  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitedBy      User?        @relation("InvitationInviter", fields: [invitedById], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([email])
 }
 
 model RefreshToken {
