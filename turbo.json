@@ -1,13 +1,20 @@
 {
-  "$schema": "https://turborepo.com/schema.json",
-  "globalPassThroughEnv": ["DATABASE_URL", "DIRECT_URL", "JWT_SECRET"],
+  "$schema": "https://turbo.build/schema.json",
+
   "tasks": {
-    "generate": { "cache": false },
     "build": {
-      "dependsOn": ["^build", "generate"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+      "dependsOn": ["^build"],
+
+      "outputs": [".next/**", "dist/**"]
     },
-    "lint": { "dependsOn": ["^build", "generate"] },
-    "dev": { "cache": false, "persistent": true }
+    "lint": {
+      "dependsOn": ["^lint"]
+    },
+
+    "dev": {
+      "cache": false,
+
+      "persistent": true
+    }
   }
 }
