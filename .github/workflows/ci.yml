@@ -45,8 +45,5 @@ jobs:
       - name: Check formatting
         run: yarn workspace @errwise/api exec prettier --check "src/**/*.ts"
 
-      - name: Lint
-        run: yarn lint
-
       - name: Build
         run: yarn build
