@@ -4,7 +4,7 @@
 
 **Error monitoring for developers. Install the SDK, see every crash in one dashboard.**
 
-[![CI](https://github.com/YOUR_USER/errwise/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USER/errwise/actions/workflows/ci.yml)
+[![CI](https://github.com/AzizHamdi99/errwise/actions/workflows/ci.yml/badge.svg)](https://github.com/AzizHamdi99/errwise/actions/workflows/ci.yml)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
 ![NestJS](https://img.shields.io/badge/NestJS-API-E0234E?logo=nestjs&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js-Dashboard-000000?logo=nextdotjs&logoColor=white)
