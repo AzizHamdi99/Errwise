@@ -16,6 +16,7 @@ export const envSchema = z.object({
   MAIL_FROM: z.string().default('Errwise <onboarding@resend.dev>'),
   RESEND_API_KEY: z.string().optional(),
   INVITATION_TTL_DAYS: z.coerce.number().int().positive().default(7),
+  INGEST_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(300),
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -17,6 +17,7 @@ import { PrismaModule } from './database/prisma.module';
 import { SecurityModule } from './common/security/security.module';
 import { InvitationsModule } from './modules/invitations/invitations.module';
 import { MailModule } from './modules/mail/mail.module';
+import { IngestionModule } from './modules/ingestion/ingestion.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { MailModule } from './modules/mail/mail.module';
     SecurityModule,
     InvitationsModule,
     MailModule,
+    IngestionModule,
   ],
   controllers: [AppController],
   providers: [
