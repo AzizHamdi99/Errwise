@@ -5,11 +5,16 @@ import { Env } from './config/env';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { VersioningType } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableShutdownHooks();
   const config = app.get<ConfigService<Env, true>>(ConfigService);
+  app.enableVersioning({
+    type: VersioningType.URI,
+    defaultVersion: '1',
+  });
   const port = config.get('API_PORT', { infer: true });
   app.use(helmet());
   app.use(cookieParser());
