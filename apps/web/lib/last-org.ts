@@ -15,3 +15,12 @@ export function setLastOrgId(id: string): void {
     /* storage unavailable */
   }
 }
+
+/** Forgets the saved organization, but only if it is the one given. */
+export function clearLastOrgId(id: string): void {
+  try {
+    if (localStorage.getItem(KEY) === id) localStorage.removeItem(KEY);
+  } catch {
+    /* storage unavailable */
+  }
+}
