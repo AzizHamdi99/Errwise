@@ -40,7 +40,7 @@ export function RegisterForm() {
   const onSubmit = handleSubmit((values) => {
     setFormError(null);
     registerUser.mutate(values, {
-      onSuccess: () => router.replace(safeNext(rawNext)),
+      onSuccess: () => router.replace(safeNext(rawNext, "/onboarding")),
       onError: (error) => {
         if (applyFieldErrors(error, setError)) return;
         if (error instanceof ApiError && error.status === 409) {

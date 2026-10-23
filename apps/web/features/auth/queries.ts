@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { LoginInput, PublicUser, RegisterInput } from "@errwise/shared";
 import { api } from "@/lib/api";
 
@@ -16,3 +16,5 @@ function useAuthMutation<T>(path: string) {
 export const useLogin = () => useAuthMutation<LoginInput>("/auth/login");
 export const useRegister = () =>
   useAuthMutation<RegisterInput>("/auth/register");
+export const useMe = () =>
+  useQuery({ queryKey: meKey, queryFn: () => api<PublicUser>("/me") });

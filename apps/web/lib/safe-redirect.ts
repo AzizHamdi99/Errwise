@@ -1,6 +1,9 @@
 export const DEFAULT_REDIRECT = "/organizations";
 
-export function safeNext(next: string | null | undefined): string {
+export function safeNext(
+  next: string | null | undefined,
+  fallback = DEFAULT_REDIRECT,
+): string {
   if (
     next &&
     next.startsWith("/") &&
@@ -9,5 +12,5 @@ export function safeNext(next: string | null | undefined): string {
   ) {
     return next;
   }
-  return DEFAULT_REDIRECT;
+  return fallback;
 }
