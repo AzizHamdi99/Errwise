@@ -1,4 +1,6 @@
 import type { NextConfig } from "next";
+const apiUrl = process.env.API_URL;
+if (!apiUrl) throw new Error("API_URL is required");
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -14,6 +16,9 @@ const nextConfig: NextConfig = {
         as: "*.css",
       },
     },
+  },
+  async rewrites() {
+    return [{ source: "/v1/:path*", destination: `${apiUrl}/v1/:path*` }];
   },
 };
 
