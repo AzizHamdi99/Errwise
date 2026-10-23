@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   CreateOrganizationInput,
   PublicOrganization,
@@ -6,6 +6,12 @@ import type {
 import { api } from "@/lib/api";
 
 export const orgKeys = { list: ["organizations"] as const };
+
+export const useOrganizations = () =>
+  useQuery({
+    queryKey: orgKeys.list,
+    queryFn: () => api<PublicOrganization[]>("/organizations"),
+  });
 
 export function useCreateOrganization() {
   const queryClient = useQueryClient();
@@ -15,6 +21,7 @@ export function useCreateOrganization() {
         method: "POST",
         body: input,
       }),
+    // returned promise: the list is fresh before the caller's onSuccess runs
     onSuccess: () => queryClient.invalidateQueries({ queryKey: orgKeys.list }),
   });
 }
