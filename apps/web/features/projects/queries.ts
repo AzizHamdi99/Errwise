@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { CreateProjectInput, PublicProject } from "@errwise/shared";
 import { api } from "@/lib/api";
 
@@ -17,3 +17,9 @@ export function useCreateProject(orgId: string) {
       queryClient.invalidateQueries({ queryKey: projectsKey(orgId) }),
   });
 }
+
+export const useProjects = (orgId: string) =>
+  useQuery({
+    queryKey: projectsKey(orgId),
+    queryFn: () => api<PublicProject[]>(`/organizations/${orgId}/projects`),
+  });

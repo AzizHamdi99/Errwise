@@ -20,8 +20,8 @@ import { getErrorMessage } from "@/lib/api";
 import { applyFieldErrors } from "@/lib/forms";
 import { useCreateApiKey } from "@/features/api-keys/queries";
 import { useCreateProject } from "@/features/projects/queries";
-import { PlatformPicker } from "./platform-picker";
 import { StepCard } from "./step-card";
+import { PlatformPicker } from "@/features/projects/components/platform-picker";
 
 // The schema has defaults, so the form's input type differs from its output type.
 type ProjectForm = z.input<typeof createProjectSchema>;
