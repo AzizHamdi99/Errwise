@@ -1,7 +1,8 @@
-import React from "react";
+import type { Metadata } from "next";
+import { OrgSettingsView } from "@/features/organizations/components/org-settings-view";
 
-const page = () => {
-  return <div></div>;
-};
+export const metadata: Metadata = { title: "Organization settings" };
 
-export default page;
+export default function OrgSettingsPage() {
+  return <OrgSettingsView />;
+}
