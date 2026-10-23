@@ -1,11 +1,5 @@
 import type { ProjectPlatform } from "@errwise/shared";
 
-export const PLATFORM_LABELS: Record<ProjectPlatform, string> = {
-  node: "Node",
-  express: "Express",
-  nestjs: "NestJS",
-};
-
 export function getSnippet(platform: ProjectPlatform, apiKey: string): string {
   const init = `Errwise.init({
   apiKey: "${apiKey}",

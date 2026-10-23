@@ -12,9 +12,10 @@ import { CopyButton } from "@/components/shared/copy-button";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useHasIssues } from "@/features/issues/queries";
-import { PLATFORM_LABELS, getSnippet } from "../platforms";
+import { getSnippet } from "../platforms";
 import { FirstErrorStatus } from "./first-error-status";
 import { StepCard } from "./step-card";
+import { getPlatform } from "@/features/projects/platforms";
 
 interface Props {
   organization: PublicOrganization;
@@ -64,7 +65,7 @@ export function InstallStep({
                 value={platform}
                 className="flex-none rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 pb-2 text-muted-foreground shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
               >
-                {PLATFORM_LABELS[platform]}
+                {getPlatform(platform).label}
               </TabsTrigger>
             ))}
           </TabsList>
