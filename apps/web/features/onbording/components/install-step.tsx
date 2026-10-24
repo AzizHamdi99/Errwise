@@ -12,10 +12,10 @@ import { CopyButton } from "@/components/shared/copy-button";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useHasIssues } from "@/features/issues/queries";
-import { getSnippet } from "../platforms";
 import { FirstErrorStatus } from "./first-error-status";
 import { StepCard } from "./step-card";
-import { getPlatform } from "@/features/projects/platforms";
+import { getPlatform, toPlatform } from "@/features/projects/platforms";
+import { getSnippet } from "@/features/projects/snippets";
 
 interface Props {
   organization: PublicOrganization;
@@ -31,9 +31,7 @@ export function InstallStep({
   onFinish,
 }: Props) {
   const { data: received = false } = useHasIssues(organization.id, project.id);
-  const initialTab =
-    PROJECT_PLATFORMS.find((p) => p === project.platform) ?? "node";
-
+  const initialTab = toPlatform(project.platform);
   return (
     <StepCard
       step={3}
