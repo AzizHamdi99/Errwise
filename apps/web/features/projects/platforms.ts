@@ -1,5 +1,6 @@
 import { Layers, Server, Terminal } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { PROJECT_PLATFORMS } from "@errwise/shared";
 import type { ProjectPlatform } from "@errwise/shared";
 
 export const PLATFORMS: Record<
@@ -12,8 +13,7 @@ export const PLATFORMS: Record<
 };
 
 /** The API stores the platform as a plain string, so fall back safely. */
-export function getPlatform(value: string) {
-  return Object.hasOwn(PLATFORMS, value)
-    ? PLATFORMS[value as ProjectPlatform]
-    : PLATFORMS.node;
-}
+export const toPlatform = (value: string): ProjectPlatform =>
+  PROJECT_PLATFORMS.find((platform) => platform === value) ?? "node";
+
+export const getPlatform = (value: string) => PLATFORMS[toPlatform(value)];
