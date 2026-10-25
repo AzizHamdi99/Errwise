@@ -17,12 +17,18 @@ import { ApiError, getErrorMessage } from "@/lib/api";
 import { applyFieldErrors } from "@/lib/forms";
 import { safeNext } from "@/lib/safe-redirect";
 import { useLogin } from "../queries";
+import { authHref } from "@/lib/auth-links";
 
 export function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const rawNext = params.get("next");
   const sessionExpired = params.get("expired") === "1";
+  const invitedEmail = params.get("email") ?? "";
+  useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: invitedEmail, password: "" },
+  });
 
   const login = useLogin();
   const [formError, setFormError] = useState<string | null>(null);
@@ -53,9 +59,13 @@ export function LoginForm() {
     });
   });
 
-  const registerHref = rawNext
-    ? `/register?next=${encodeURIComponent(rawNext)}`
-    : "/register";
+  // const registerHref = rawNext
+  //   ? `/register?next=${encodeURIComponent(rawNext)}`
+  //   : "/register";
+  const registerHref = authHref("/register", {
+    next: rawNext,
+    email: invitedEmail,
+  });
 
   return (
     <div className="space-y-6">
