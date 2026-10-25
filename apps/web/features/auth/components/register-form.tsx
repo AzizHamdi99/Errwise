@@ -18,13 +18,17 @@ import { applyFieldErrors } from "@/lib/forms";
 import { safeNext } from "@/lib/safe-redirect";
 import { useRegister } from "../queries";
 import { PasswordStrength } from "./password-strength";
+import { authHref } from "@/lib/auth-links";
 
 export function RegisterForm() {
   const router = useRouter();
-  const rawNext = useSearchParams().get("next");
+  //const rawNext = useSearchParams().get("next");
 
   const registerUser = useRegister();
   const [formError, setFormError] = useState<string | null>(null);
+  const params = useSearchParams();
+  const rawNext = params.get("next");
+  const invitedEmail = params.get("email") ?? "";
 
   const {
     register,
@@ -34,7 +38,7 @@ export function RegisterForm() {
     formState: { errors },
   } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { name: "", email: "", password: "" },
+    defaultValues: { name: "", email: invitedEmail, password: "" },
   });
 
   const onSubmit = handleSubmit((values) => {
@@ -52,9 +56,7 @@ export function RegisterForm() {
     });
   });
 
-  const loginHref = rawNext
-    ? `/login?next=${encodeURIComponent(rawNext)}`
-    : "/login";
+  const loginHref = authHref("/login", { next: rawNext, email: invitedEmail });
 
   return (
     <div className="space-y-6">
@@ -84,14 +86,31 @@ export function RegisterForm() {
           />
         </Field>
 
-        <Field label="Email" htmlFor="email" error={errors.email?.message}>
+        <Field
+          label="Email"
+          htmlFor="email"
+          error={errors.email?.message}
+          hint={
+            invitedEmail
+              ? "This invitation was sent to this address."
+              : undefined
+          }
+        >
           <Input
             id="email"
             type="email"
             placeholder="you@company.com"
             autoComplete="email"
+            readOnly={!!invitedEmail}
+            className={invitedEmail ? "text-muted-foreground" : undefined}
             aria-invalid={!!errors.email}
-            aria-describedby={errors.email ? "email-error" : undefined}
+            aria-describedby={
+              errors.email
+                ? "email-error"
+                : invitedEmail
+                  ? "email-hint"
+                  : undefined
+            }
             {...register("email")}
           />
         </Field>

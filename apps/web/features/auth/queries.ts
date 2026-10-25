@@ -18,17 +18,24 @@ function useAuthMutation<T>(path: string) {
   });
 }
 
-export function useLogout() {
-  const router = useRouter();
-  const queryClient = useQueryClient();
+// export function useLogout() {
+//   const router = useRouter();
+//   const queryClient = useQueryClient();
 
+//   return useMutation({
+//     mutationFn: () => api<void>("/auth/logout", { method: "POST" }),
+
+//     onSettled: () => {
+//       queryClient.clear();
+//       router.replace("/login");
+//     },
+//   });
+// }
+export function useLogout(redirectTo = "/login") {
   return useMutation({
     mutationFn: () => api<void>("/auth/logout", { method: "POST" }),
-
-    onSettled: () => {
-      queryClient.clear();
-      router.replace("/login");
-    },
+    // A full reload clears every cached query and avoids a refetch race.
+    onSettled: () => window.location.assign(redirectTo),
   });
 }
 
