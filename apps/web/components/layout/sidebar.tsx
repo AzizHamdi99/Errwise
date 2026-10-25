@@ -8,6 +8,7 @@ import { UserMenu } from "@/features/auth/components/user-menu";
 import { OrgSwitcher } from "@/features/organizations/components/org-switcher";
 import { useCurrentOrg } from "@/features/organizations/use-current-org";
 import { cn } from "@/lib/utils";
+import { PendingCountBadge } from "@/features/invitations/components/pending-count-badge";
 
 const NAV = [
   { label: "Projects", segment: "projects", icon: FolderKanban },
@@ -50,6 +51,9 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               >
                 <Icon className="size-4" aria-hidden />
                 {label}
+                {segment === "members" ? (
+                  <PendingCountBadge orgId={org.id} role={org.role} />
+                ) : null}
               </Link>
             );
           })}

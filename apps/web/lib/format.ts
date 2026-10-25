@@ -38,3 +38,7 @@ export function getInitials(value: string, max = 2): string {
     words.length > 1 ? words.map((w) => w[0]).join("") : (words[0] ?? "?");
   return letters.slice(0, max).toUpperCase();
 }
+
+/** Members may have no name: fall back to the email. */
+export const displayName = (person: { name: string | null; email: string }) =>
+  person.name ?? person.email;
