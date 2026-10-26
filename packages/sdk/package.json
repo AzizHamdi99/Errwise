@@ -1,10 +1,48 @@
 {
-  "name": "@errwise/sdk",
+  "name": "@errwise/node",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Errwise SDK for Node.js: capture errors and send them to your dashboard.",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "lint": "eslint ."
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint src test",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
+    "@errwise/shared": "workspace:*",
     "@eslint/js": "^10.0.1",
-    "eslint": "^10.12.0"
+    "@types/node": "^20",
+    "eslint": "^10.13.0",
+    "tsup": "^9.0.0",
+    "typescript": "~5.9.0",
+    "typescript-eslint": "^8.72.1",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
   }
 }
