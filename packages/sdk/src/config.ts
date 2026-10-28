@@ -13,6 +13,7 @@ export interface ResolvedConfig {
   enabled: boolean;
   debug: boolean;
   beforeSend: ((event: ErrwiseEvent) => ErrwiseEvent | null) | undefined;
+  captureUncaughtErrors: boolean;
 }
 
 export type ConfigResult =
@@ -74,6 +75,7 @@ export function resolveConfig(options: ErrwiseOptions): ConfigResult {
         clean(process.env.ERRWISE_RELEASE, MAX_RELEASE),
       enabled: options.enabled !== false,
       debug: options.debug === true,
+      captureUncaughtErrors: options.captureUncaughtErrors !== false,
       beforeSend:
         typeof options.beforeSend === "function"
           ? options.beforeSend

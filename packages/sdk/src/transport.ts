@@ -1,28 +1,49 @@
 import type { ResolvedConfig } from "./config";
 import type { Logger } from "./logger";
-import type { ErrwiseEvent } from "./types";
 import { describeError } from "./utils";
 import { SDK_NAME, SDK_VERSION } from "./version";
 
 const REQUEST_TIMEOUT_MS = 5_000;
 
 export interface SendResult {
-  ok: boolean;
+  /** HTTP status. Undefined when the request itself failed (network error, timeout, abort). */
   status?: number;
+  /** From the Retry-After header, in milliseconds. */
+  retryAfterMs?: number;
 }
 
 export interface Transport {
-  send(events: ErrwiseEvent[]): Promise<SendResult>;
+  /** `body` is a JSON array of events. Never throws. */
+  send(body: string, count: number, stop?: AbortSignal): Promise<SendResult>;
+}
+
+/** Retry-After is either a number of seconds or an HTTP date. */
+export function parseRetryAfter(
+  value: string | null,
+  now: number = Date.now(),
+): number | undefined {
+  if (!value) return undefined;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds) && seconds >= 0)
+    return Math.round(seconds * 1000);
+  const date = Date.parse(value);
+  return Number.isNaN(date) ? undefined : Math.max(0, date - now);
 }
 
 export function createTransport(
   config: Pick<ResolvedConfig, "apiKey" | "eventsUrl">,
   logger: Logger,
 ): Transport {
-  let warnedUnauthorized = false;
-
   return {
-    async send(events) {
+    async send(body, count, stop) {
+      if (stop?.aborted) return {};
+
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+      timer.unref();
+      const onStop = () => controller.abort();
+      stop?.addEventListener("abort", onStop, { once: true });
+
       try {
         const response = await fetch(config.eventsUrl, {
           method: "POST",
@@ -31,30 +52,27 @@ export function createTransport(
             "x-api-key": config.apiKey,
             "user-agent": `${SDK_NAME}/${SDK_VERSION}`,
           },
-          body: JSON.stringify(events),
-          signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+          body,
+          signal: controller.signal,
         });
         const text = await response.text().catch(() => "");
 
-        if (response.ok) {
-          logger.debug(`sent ${events.length} event(s)`);
-          return { ok: true, status: response.status };
-        }
-
-        if (response.status === 401 && !warnedUnauthorized) {
-          warnedUnauthorized = true; // warn once, not for every error
-          logger.warn(
-            "The API key was rejected (401), so events are not delivered. Check the key and that it was not revoked.",
-          );
-        } else {
+        if (response.ok) logger.debug(`sent ${count} event(s)`);
+        else
           logger.debug(
             `the API answered ${response.status}: ${text.slice(0, 500)}`,
           );
-        }
-        return { ok: false, status: response.status };
+
+        return {
+          status: response.status,
+          retryAfterMs: parseRetryAfter(response.headers.get("retry-after")),
+        };
       } catch (error) {
         logger.debug(`could not reach the API: ${describeError(error)}`);
-        return { ok: false };
+        return {};
+      } finally {
+        clearTimeout(timer);
+        stop?.removeEventListener("abort", onStop);
       }
     },
   };
