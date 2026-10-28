@@ -7,5 +7,10 @@ const pkg = JSON.parse(readFileSync("./package.json", "utf8")) as {
 
 export default defineConfig({
   define: { __SDK_VERSION__: JSON.stringify(pkg.version) },
-  test: { include: ["test/**/*.test.ts"], environment: "node" },
+  test: {
+    include: ["test/**/*.test.ts"],
+    environment: "node",
+    globalSetup: ["./test/global-setup.ts"],
+    testTimeout: 15_000,
+  },
 });

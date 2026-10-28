@@ -1,7 +1,7 @@
 import type { ResolvedConfig } from "./config";
+import type { Dispatcher } from "./dispatcher";
 import { buildEvent, enforceLimits } from "./event";
 import type { Logger } from "./logger";
-import type { Transport } from "./transport";
 import type { CaptureOptions, ErrwiseEvent } from "./types";
 import { describeError } from "./utils";
 
@@ -16,16 +16,15 @@ function isEventLike(value: unknown): value is ErrwiseEvent {
 }
 
 export class ErrwiseClient {
-  private readonly pending = new Set<Promise<unknown>>();
   private closed = false;
 
   constructor(
     private readonly config: ResolvedConfig,
-    private readonly transport: Transport,
+    private readonly dispatcher: Dispatcher,
     private readonly logger: Logger,
   ) {}
 
-  /** Never throws and never waits for the network. Returns the event id, or undefined if nothing was sent. */
+  /** Never throws and never waits for the network. Returns the event id, or undefined if the event was not accepted. */
   captureException(
     error: unknown,
     options?: CaptureOptions,
@@ -36,8 +35,7 @@ export class ErrwiseClient {
         buildEvent(error, this.config, options),
       );
       if (!event) return undefined;
-      this.track(this.transport.send([event]));
-      return event.eventId;
+      return this.dispatcher.enqueue(event) ? event.eventId : undefined;
     } catch (caught) {
       this.logger.debug(
         `could not capture the error: ${describeError(caught)}`,
@@ -46,29 +44,14 @@ export class ErrwiseClient {
     }
   }
 
-  /** Waits for events that are being sent. Returns false if the timeout was reached first. */
-  async flush(timeoutMs: number = DEFAULT_FLUSH_TIMEOUT_MS): Promise<boolean> {
-    if (this.pending.size === 0) return true;
-
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const timeout = new Promise<false>((resolve) => {
-      timer = setTimeout(() => resolve(false), timeoutMs);
-      timer?.unref(); // the timer must never keep the process alive
-    });
-    const drained = Promise.allSettled([...this.pending]).then(
-      () => true as const,
-    );
-
-    try {
-      return await Promise.race([drained, timeout]);
-    } finally {
-      clearTimeout(timer);
-    }
+  /** Sends what is queued. Resolves false if events are still queued after the timeout. */
+  flush(timeoutMs: number = DEFAULT_FLUSH_TIMEOUT_MS): Promise<boolean> {
+    return this.dispatcher.flush(timeoutMs);
   }
 
-  async close(timeoutMs?: number): Promise<void> {
+  async close(timeoutMs: number = DEFAULT_FLUSH_TIMEOUT_MS): Promise<void> {
     this.closed = true;
-    await this.flush(timeoutMs);
+    await this.dispatcher.close(timeoutMs);
   }
 
   private applyBeforeSend(event: ErrwiseEvent): ErrwiseEvent | null {
@@ -96,12 +79,5 @@ export class ErrwiseClient {
       );
       return null;
     }
-  }
-
-  private track(promise: Promise<unknown>): void {
-    const tracked = promise
-      .catch(() => undefined)
-      .finally(() => this.pending.delete(tracked));
-    this.pending.add(tracked);
   }
 }
