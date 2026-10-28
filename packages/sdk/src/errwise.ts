@@ -1,10 +1,13 @@
 import { ErrwiseClient } from "./client";
 import { resolveConfig } from "./config";
+import { Dispatcher } from "./dispatcher";
+import { installProcessHooks } from "./handlers";
 import { createLogger } from "./logger";
 import { createTransport } from "./transport";
 import type { CaptureOptions, ErrwiseOptions } from "./types";
 
 let client: ErrwiseClient | undefined;
+let uninstallHooks: (() => void) | undefined;
 
 function init(options: ErrwiseOptions): void {
   try {
@@ -30,7 +33,11 @@ function init(options: ErrwiseOptions): void {
       return;
     }
 
-    client = new ErrwiseClient(config, createTransport(config, logger), logger);
+    const dispatcher = new Dispatcher(createTransport(config, logger), logger);
+    client = new ErrwiseClient(config, dispatcher, logger);
+    uninstallHooks = installProcessHooks(client, {
+      captureUncaughtErrors: config.captureUncaughtErrors,
+    });
     logger.debug(
       `initialized (environment: ${config.environment}, release: ${config.release ?? "none"})`,
     );
@@ -46,6 +53,7 @@ function captureException(
   return client?.captureException(error, options);
 }
 
+/** Resolves true when everything queued was sent, false if events are still queued after the timeout. */
 async function flush(timeoutMs?: number): Promise<boolean> {
   try {
     return client ? await client.flush(timeoutMs) : true;
@@ -57,6 +65,8 @@ async function flush(timeoutMs?: number): Promise<boolean> {
 async function close(timeoutMs?: number): Promise<void> {
   const current = client;
   client = undefined; // allows init() again
+  uninstallHooks?.();
+  uninstallHooks = undefined;
   try {
     await current?.close(timeoutMs);
   } catch {

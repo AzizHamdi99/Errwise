@@ -10,6 +10,7 @@ const config: ResolvedConfig = {
   enabled: true,
   debug: false,
   beforeSend: undefined,
+  captureUncaughtErrors: true,
 };
 
 describe("normalizeError", () => {

@@ -40,4 +40,10 @@ export interface ErrwiseOptions {
   beforeSend?: (event: ErrwiseEvent) => ErrwiseEvent | null;
   /** Print what the SDK is doing. */
   debug?: boolean;
+  /**
+   * Capture uncaught exceptions and unhandled promise rejections.
+   * The SDK only takes over the crash when the app has no handler of its own:
+   * it sends the event, then exits with code 1, like Node does. Default: true.
+   */
+  captureUncaughtErrors?: boolean;
 }

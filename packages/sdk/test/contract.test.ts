@@ -11,6 +11,7 @@ const config: ResolvedConfig = {
   enabled: true,
   debug: false,
   beforeSend: undefined,
+  captureUncaughtErrors: true,
 };
 
 const hugeError = new Error("m".repeat(10_000));
