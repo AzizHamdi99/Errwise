@@ -31,6 +31,14 @@ describe("resolveConfig", () => {
       "https://example.com/v1/events",
     );
   });
+  it("captures uncaught errors unless turned off", () => {
+    const value = (captureUncaughtErrors: boolean | undefined) => {
+      const result = resolveConfig({ ...valid, captureUncaughtErrors });
+      return result.ok ? result.config.captureUncaughtErrors : null;
+    };
+    expect(value(undefined)).toBe(true);
+    expect(value(false)).toBe(false);
+  });
 
   it("rejects a missing or malformed key without echoing it", () => {
     const result = resolveConfig({ ...valid, apiKey: "ew_live_secretvalue" });
