@@ -28,6 +28,11 @@ const cases: Array<[string, unknown, Parameters<typeof buildEvent>[2]]> = [
   ["undefined", undefined, {}],
   ["an object", { code: "E1" }, { level: "warning" }],
   ["an oversized Error", hugeError, { extra: { blob: "x".repeat(20_000) } }],
+  [
+    "an Error with a request",
+    new Error("x"),
+    { request: { method: "GET", path: "/users/1" } },
+  ],
 ];
 
 describe("SDK events match the API schema", () => {

@@ -13,6 +13,7 @@
     "build": "turbo run build",
     "build:web": "yarn workspace @errwise/web build",
     "build:api": "yarn workspace @errwise/api build",
+    "dev:demo": "yarn workspace @errwise/demo-app start",
     "lint": "turbo run lint",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",

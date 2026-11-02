@@ -6,7 +6,7 @@ const pkg = JSON.parse(readFileSync("./package.json", "utf8")) as {
 };
 
 export default defineConfig({
-  entry: ["src/index.ts"],
+  entry: { index: "src/index.ts", nestjs: "src/nestjs.ts" },
   format: ["esm", "cjs"],
   dts: true,
   clean: true,
