@@ -813,19 +813,46 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@errwise/node@workspace:packages/sdk":
+"@errwise/demo-app@workspace:apps/demo-app":
+  version: 0.0.0-use.local
+  resolution: "@errwise/demo-app@workspace:apps/demo-app"
+  dependencies:
+    "@errwise/node": "workspace:*"
+    express: "npm:^5.1.0"
+  languageName: unknown
+  linkType: soft
+
+"@errwise/node@workspace:*, @errwise/node@workspace:packages/sdk":
   version: 0.0.0-use.local
   resolution: "@errwise/node@workspace:packages/sdk"
   dependencies:
     "@errwise/shared": "workspace:*"
     "@eslint/js": "npm:^10.0.1"
+    "@nestjs/common": "npm:^11"
+    "@nestjs/core": "npm:^11"
+    "@nestjs/platform-express": "npm:^11"
+    "@nestjs/testing": "npm:^11"
+    "@types/express": "npm:^5"
     "@types/node": "npm:^20"
+    "@types/supertest": "npm:^7.2.1"
     eslint: "npm:^10.13.0"
+    express: "npm:^5"
+    reflect-metadata: "npm:^0.2.2"
+    rxjs: "npm:^7"
+    supertest: "npm:^7.3.1"
     tsup: "npm:^9.0.0"
     typescript: "npm:~5.9.0"
     typescript-eslint: "npm:^8.72.1"
     vite: "npm:^8.3.5"
     vitest: "npm:^5.0.5"
+  peerDependencies:
+    "@nestjs/common": ">=9"
+    "@nestjs/core": ">=9"
+  peerDependenciesMeta:
+    "@nestjs/common":
+      optional: true
+    "@nestjs/core":
+      optional: true
   languageName: unknown
   linkType: soft
 
@@ -2589,6 +2616,29 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@nestjs/common@npm:^11":
+  version: 11.2.8
+  resolution: "@nestjs/common@npm:11.2.8"
+  dependencies:
+    file-type: "npm:21.3.4"
+    iterare: "npm:1.2.1"
+    load-esm: "npm:1.0.3"
+    tslib: "npm:2.8.1"
+    uid: "npm:2.0.2"
+  peerDependencies:
+    class-transformer: ">=0.4.1"
+    class-validator: ">=0.13.2"
+    reflect-metadata: ^0.1.12 || ^0.2.0
+    rxjs: ^7.1.0
+  peerDependenciesMeta:
+    class-transformer:
+      optional: true
+    class-validator:
+      optional: true
+  checksum: 10c0/16fd0c56c91581e52abe3bfe8f614be7547cdb8e0e2e907ca4aeb0370ba866fec09b332f5043c556c9fde1c702d69fe8b6cde1f013862722afe5ccfa1e7bfbf6
+  languageName: node
+  linkType: hard
+
 "@nestjs/common@npm:^11.0.1":
   version: 11.2.7
   resolution: "@nestjs/common@npm:11.2.7"
@@ -2624,6 +2674,33 @@ __metadata:
     "@nestjs/common": ^11.0.0 || ^12.0.0
     rxjs: ^7.1.0
   checksum: 10c0/47856f42f26ece433ba504c2a140987dab0416dcf4c77bd9d4928170db46efb683a6b5426ee28826a82e11953e7071b53a3d92c1ce1b87fb7cf62c687dc22ba7
+  languageName: node
+  linkType: hard
+
+"@nestjs/core@npm:^11":
+  version: 11.2.8
+  resolution: "@nestjs/core@npm:11.2.8"
+  dependencies:
+    fast-safe-stringify: "npm:2.1.1"
+    iterare: "npm:1.2.1"
+    path-to-regexp: "npm:8.4.2"
+    tslib: "npm:2.8.1"
+    uid: "npm:2.0.2"
+  peerDependencies:
+    "@nestjs/common": ^11.0.0
+    "@nestjs/microservices": ^11.0.0
+    "@nestjs/platform-express": ^11.0.0
+    "@nestjs/websockets": ^11.0.0
+    reflect-metadata: ^0.1.12 || ^0.2.0
+    rxjs: ^7.1.0
+  peerDependenciesMeta:
+    "@nestjs/microservices":
+      optional: true
+    "@nestjs/platform-express":
+      optional: true
+    "@nestjs/websockets":
+      optional: true
+  checksum: 10c0/aaa2c571df8c186cf1b48c7a3208a4290c01f284b1fd5893cb42304e93de7b21dc77ee3140799e4891bedd4016a849a34e37917eda721ad3d6f343997a7625af
   languageName: node
   linkType: hard
 
@@ -2680,6 +2757,22 @@ __metadata:
     class-validator:
       optional: true
   checksum: 10c0/6b5d61f402b163b985060b3f8484b04ae6c176a46e3a7b49d006a2b19614b0640b18c327faf494288c3c48ae8fbaf1142b83ecd2c02bc29ca9f7c3b7f7cfc9bf
+  languageName: node
+  linkType: hard
+
+"@nestjs/platform-express@npm:^11":
+  version: 11.2.8
+  resolution: "@nestjs/platform-express@npm:11.2.8"
+  dependencies:
+    cors: "npm:2.8.6"
+    express: "npm:5.2.1"
+    multer: "npm:2.4.0"
+    path-to-regexp: "npm:8.4.2"
+    tslib: "npm:2.8.1"
+  peerDependencies:
+    "@nestjs/common": ^11.0.0
+    "@nestjs/core": ^11.0.0
+  checksum: 10c0/026a6bb516a7a07671dd5db0d00368081a2ce56236d235eb2b53301e465125f2d40af14c3085d88398d279407ec84fec890d94a034e807dd9817dac86193a253
   languageName: node
   linkType: hard
 
@@ -2747,6 +2840,25 @@ __metadata:
     typescript:
       optional: true
   checksum: 10c0/96f2d4488283ccb096780bb63baf8bd994d49cbe37fca12b39b08f95ed8fedc79bb61a34e1c864731300a128b38093d13f1430940786a1a99c08f8f1cd0428ed
+  languageName: node
+  linkType: hard
+
+"@nestjs/testing@npm:^11":
+  version: 11.2.8
+  resolution: "@nestjs/testing@npm:11.2.8"
+  dependencies:
+    tslib: "npm:2.8.1"
+  peerDependencies:
+    "@nestjs/common": ^11.0.0
+    "@nestjs/core": ^11.0.0
+    "@nestjs/microservices": ^11.0.0
+    "@nestjs/platform-express": ^11.0.0
+  peerDependenciesMeta:
+    "@nestjs/microservices":
+      optional: true
+    "@nestjs/platform-express":
+      optional: true
+  checksum: 10c0/378636a42f5ed455bd6aa0187b85f08e6a0dcf59978cbad29686a0329920ab8b3d6562aec79ba6b5cf3a2bb270112b5bc2eab6f37c682ded8a1c21b4949b9495
   languageName: node
   linkType: hard
 
@@ -4120,7 +4232,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/express@npm:^5.0.0":
+"@types/express@npm:^5, @types/express@npm:^5.0.0":
   version: 5.0.6
   resolution: "@types/express@npm:5.0.6"
   dependencies:
@@ -4308,7 +4420,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/supertest@npm:^7.0.0":
+"@types/supertest@npm:^7.0.0, @types/supertest@npm:^7.2.1":
   version: 7.2.1
   resolution: "@types/supertest@npm:7.2.1"
   dependencies:
@@ -7885,7 +7997,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"express@npm:^5.2.1":
+"express@npm:^5, express@npm:^5.1.0, express@npm:^5.2.1":
   version: 5.3.0
   resolution: "express@npm:5.3.0"
   dependencies:
@@ -12264,7 +12376,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rxjs@npm:^7.8.1":
+"rxjs@npm:^7, rxjs@npm:^7.8.1":
   version: 7.8.2
   resolution: "rxjs@npm:7.8.2"
   dependencies:
@@ -13055,7 +13167,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"supertest@npm:^7.0.0":
+"supertest@npm:^7.0.0, supertest@npm:^7.3.1":
   version: 7.3.1
   resolution: "supertest@npm:7.3.1"
   dependencies:
