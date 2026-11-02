@@ -15,6 +15,18 @@ export interface ErrwiseEvent {
   sdk: string;
   context?: Record<string, unknown>;
 }
+export interface RequestContext {
+  method: string;
+  /** Only the path is kept: the query string and the fragment are removed. */
+  path: string;
+}
+export interface CaptureOptions {
+  level?: EventLevel;
+  /** Extra data shown in the issue's context. Must be JSON-serializable. */
+  extra?: Record<string, unknown>;
+  /** The HTTP request being handled. Only its method and path are sent. */
+  request?: RequestContext;
+}
 
 export interface CaptureOptions {
   level?: EventLevel;

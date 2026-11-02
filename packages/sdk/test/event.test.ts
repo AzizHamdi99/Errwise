@@ -125,4 +125,28 @@ describe("buildEvent", () => {
     });
     expect(event.level).toBe("error");
   });
+  it("keeps only the method and the path of the request", () => {
+    const event = buildEvent(new Error("x"), config, {
+      request: { method: "post", path: "/reset/abc?token=secret#top" },
+    });
+    expect(event.context?.request).toEqual({
+      method: "POST",
+      path: "/reset/abc",
+    });
+    expect(JSON.stringify(event)).not.toContain("secret");
+  });
+
+  it("ignores a request that is not valid", () => {
+    const event = buildEvent(new Error("x"), config, {
+      request: { method: 1, path: "?only=query" } as never,
+    });
+    expect(event.context?.request).toBeUndefined();
+  });
+
+  it("truncates a very long path", () => {
+    const event = buildEvent(new Error("x"), config, {
+      request: { method: "GET", path: `/${"a".repeat(2_000)}` },
+    });
+    expect((event.context?.request as { path: string }).path).toHaveLength(500);
+  });
 });
