@@ -1,0 +1,13 @@
+{
+  "name": "@errwise/demo-app",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.mjs"
+  },
+  "dependencies": {
+    "@errwise/node": "workspace:*",
+    "express": "^5.1.0"
+  }
+}

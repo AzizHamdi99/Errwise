@@ -3,7 +3,7 @@ import { hostname } from "node:os";
 import { types } from "node:util";
 import type { ResolvedConfig } from "./config";
 import { EVENT_LEVELS } from "./types";
-import type { CaptureOptions, ErrwiseEvent } from "./types";
+import type { CaptureOptions, ErrwiseEvent, RequestContext } from "./types";
 import { SDK_NAME, SDK_VERSION } from "./version";
 
 /** The same limits as eventSchema in @errwise/shared. */
@@ -15,6 +15,9 @@ export const LIMITS = {
   environment: 64,
   release: 128,
 } as const;
+
+const MAX_METHOD = 16;
+const MAX_PATH = 500;
 
 export interface NormalizedError {
   type: string;
@@ -74,24 +77,45 @@ function toJsonSafe(value: unknown): unknown {
   }
 }
 
-function buildContext(
-  extra: Record<string, unknown> | undefined,
-): Record<string, unknown> {
-  const context: Record<string, unknown> = {
+// function buildContext(
+//   extra: Record<string, unknown> | undefined,
+// ): Record<string, unknown> {
+//   const context: Record<string, unknown> = {
+//     nodeVersion: process.version,
+//     os: process.platform,
+//     hostname: hostname(),
+//   };
+//   if (extra === undefined) return context;
+
+//   const safeExtra = toJsonSafe(extra);
+//   if (safeExtra === undefined)
+//     return { ...context, extraDropped: "not serializable" };
+
+//   const withExtra = { ...context, extra: safeExtra };
+//   return JSON.stringify(withExtra).length <= LIMITS.context
+//     ? withExtra
+//     : { ...context, extraDropped: "too large" };
+// }
+
+function buildContext(options: CaptureOptions): Record<string, unknown> {
+  const base: Record<string, unknown> = {
     nodeVersion: process.version,
     os: process.platform,
     hostname: hostname(),
   };
-  if (extra === undefined) return context;
+  const request = cleanRequest(options.request);
+  if (request) base.request = request;
 
-  const safeExtra = toJsonSafe(extra);
+  if (options.extra === undefined) return base;
+
+  const safeExtra = toJsonSafe(options.extra);
   if (safeExtra === undefined)
-    return { ...context, extraDropped: "not serializable" };
+    return { ...base, extraDropped: "not serializable" };
 
-  const withExtra = { ...context, extra: safeExtra };
+  const withExtra = { ...base, extra: safeExtra };
   return JSON.stringify(withExtra).length <= LIMITS.context
     ? withExtra
-    : { ...context, extraDropped: "too large" };
+    : { ...base, extraDropped: "too large" };
 }
 
 function fitContext(context: unknown): Record<string, unknown> | undefined {
@@ -153,6 +177,20 @@ export function buildEvent(
     release: config.release,
     platform: "node",
     sdk: `${SDK_NAME}/${SDK_VERSION}`,
-    context: buildContext(options.extra),
+    context: buildContext(options),
   });
+}
+
+/** Keeps the method and the path only: query strings often carry tokens. */
+function cleanRequest(request: unknown): RequestContext | undefined {
+  if (typeof request !== "object" || request === null) return undefined;
+  const { method, path } = request as { method?: unknown; path?: unknown };
+  if (typeof method !== "string" || typeof path !== "string") return undefined;
+
+  const cleanPath = path.split(/[?#]/)[0] ?? "";
+  if (!method || !cleanPath) return undefined;
+  return {
+    method: truncate(method.toUpperCase(), MAX_METHOD),
+    path: truncate(cleanPath, MAX_PATH),
+  };
 }
