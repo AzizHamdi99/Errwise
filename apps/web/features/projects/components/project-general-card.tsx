@@ -144,7 +144,9 @@ export function ProjectGeneralCard({ orgId, project, canEdit }: Props) {
                 max={90}
                 step={1}
                 value={[field.value ?? project.retentionDays]}
-                onValueChange={([value]) => field.onChange(value)}
+                onValueChange={(next) =>
+                  field.onChange(typeof next === "number" ? next : next[0])
+                }
                 disabled={!canEdit}
               />
             </Field>

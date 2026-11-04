@@ -49,8 +49,8 @@ export function IssuesEmptyState({
       description="New errors from your SDK appear here as soon as they arrive."
       action={
         <div className="flex flex-wrap justify-center gap-3">
-          <Button asChild>
-            <Link href={apiKeysHref}>Set up the SDK</Link>
+          <Button render={<Link href={apiKeysHref} />} nativeButton={false}>
+            Set up the SDK
           </Button>
           {showingAll ? null : (
             <Button variant="outline" onClick={onShowAll}>
