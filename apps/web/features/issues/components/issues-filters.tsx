@@ -61,7 +61,9 @@ export function IssuesFilters({
       <Select
         value={filters.environment ?? "all"}
         onValueChange={(value) =>
-          onChange({ environment: value === "all" ? undefined : value })
+          onChange({
+            environment: value === null || value === "all" ? undefined : value,
+          })
         }
       >
         <SelectTrigger className="w-full sm:w-[190px]" aria-label="Environment">

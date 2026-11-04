@@ -27,12 +27,7 @@ interface Props {
 export function KeyRevealDialog({ apiKey, platform, onClose }: Props) {
   return (
     <Dialog open={!!apiKey}>
-      <DialogContent
-        showCloseButton={false}
-        className="sm:max-w-2xl"
-        onEscapeKeyDown={(event) => event.preventDefault()}
-        onInteractOutside={(event) => event.preventDefault()}
-      >
+      <DialogContent showCloseButton={false} className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Your new API key</DialogTitle>
           <DialogDescription>

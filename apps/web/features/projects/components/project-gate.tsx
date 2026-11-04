@@ -43,14 +43,18 @@ export function ProjectGate({ children }: { children: React.ReactNode }) {
         title="Project not found"
         description="It may have been deleted, or it belongs to another organization."
         action={
-          <Button asChild variant="outline">
-            <Link
-              href={
-                org ? `/organizations/${org.id}/projects` : "/organizations"
-              }
-            >
-              Back to projects
-            </Link>
+          <Button
+            variant="outline"
+            render={
+              <Link
+                href={
+                  org ? `/organizations/${org.id}/projects` : "/organizations"
+                }
+              ></Link>
+            }
+            nativeButton={false}
+          >
+            Back to projects
           </Button>
         }
       />
