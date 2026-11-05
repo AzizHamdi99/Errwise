@@ -1,9 +1,16 @@
 {
   "name": "@errwise/node",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.1",
   "description": "Errwise SDK for Node.js: capture errors and send them to your dashboard.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AzizHamdi99/errwise.git",
+    "directory": "packages/sdk"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "exports": {
@@ -49,7 +56,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "sideEffects": false,
   "engines": {
@@ -61,7 +69,8 @@
     "lint": "eslint src test",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "prepublishOnly": "yarn typecheck && yarn test && yarn build"
   },
   "devDependencies": {
     "@errwise/shared": "workspace:*",

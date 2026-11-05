@@ -38,7 +38,7 @@ export interface ErrwiseOptions {
   /** Your project key: ew_live_... */
   apiKey: string;
   /** Base URL of the Errwise API, for example http://localhost:4000 */
-  endpoint: string;
+  endpoint?: string;
   /** Defaults to NODE_ENV, or "production". */
   environment?: string;
   /** Defaults to the ERRWISE_RELEASE environment variable. */
