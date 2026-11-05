@@ -1,6 +1,6 @@
 {
   "name": "@errwise/node",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Errwise SDK for Node.js: capture errors and send them to your dashboard.",
   "license": "MIT",
   "repository": {
