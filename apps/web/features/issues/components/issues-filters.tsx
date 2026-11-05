@@ -49,7 +49,7 @@ export function IssuesFilters({
             aria-pressed={filters.status === status}
             onClick={() => onChange({ status })}
             className={cn(
-              "rounded-md px-3 py-1.5 text-xs font-medium text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
+              "rounded-md px-3 py-1.5 text-xs font-medium text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring cursor-pointer",
               filters.status === status && "bg-accent text-foreground",
             )}
           >
@@ -66,13 +66,20 @@ export function IssuesFilters({
           })
         }
       >
-        <SelectTrigger className="w-full sm:w-[190px]" aria-label="Environment">
+        <SelectTrigger
+          className="w-full sm:w-[190px] cursor-pointer"
+          aria-label="Environment"
+        >
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All environments</SelectItem>
           {environments.map((environment) => (
-            <SelectItem key={environment} value={environment}>
+            <SelectItem
+              key={environment}
+              value={environment}
+              className="cursor-pointer"
+            >
               {environment}
             </SelectItem>
           ))}

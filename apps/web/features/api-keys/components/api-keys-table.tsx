@@ -55,7 +55,7 @@ export function ApiKeysTable({ keys, canWrite, onRevoke }: Props) {
           {keys.map((key) => {
             const revoked = !!key.revokedAt;
             return (
-              <TableRow key={key.id}>
+              <TableRow key={key.id} className="cursor-pointer">
                 <TableCell className="font-medium">{key.name}</TableCell>
                 <TableCell
                   className={cn(

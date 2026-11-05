@@ -9,6 +9,7 @@ import { OrgSwitcher } from "@/features/organizations/components/org-switcher";
 import { useCurrentOrg } from "@/features/organizations/use-current-org";
 import { cn } from "@/lib/utils";
 import { PendingCountBadge } from "@/features/invitations/components/pending-count-badge";
+import { ThemeToggle } from "../shared/theme-toggle";
 
 const NAV = [
   { label: "Projects", segment: "projects", icon: FolderKanban },
@@ -22,14 +23,16 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <div className="flex h-full flex-col gap-5 p-3">
-      <Link
-        href="/organizations"
-        onClick={onNavigate}
-        className="rounded-md px-1 py-1 outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        <Brand />
-      </Link>
-
+      <div className="flex items-center justify-between">
+        <Link
+          href="/organizations"
+          onClick={onNavigate}
+          className="rounded-md px-1 py-1 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Brand />
+        </Link>
+        <ThemeToggle />
+      </div>
       <OrgSwitcher onNavigate={onNavigate} />
 
       {org ? (
