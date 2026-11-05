@@ -4,6 +4,7 @@ import type { ErrwiseEvent, ErrwiseOptions } from "./types";
 const API_KEY_PATTERN = /^ew_live_[A-Za-z0-9]{32}$/;
 const MAX_ENVIRONMENT = 64;
 const MAX_RELEASE = 128;
+export const DEFAULT_ENDPOINT = "https://errwise-api.vercel.app/";
 
 export interface ResolvedConfig {
   apiKey: string;
@@ -52,7 +53,7 @@ export function resolveConfig(options: ErrwiseOptions): ConfigResult {
         "apiKey is missing or malformed (expected ew_live_ followed by 32 characters).",
     };
   }
-  const eventsUrl = buildEventsUrl(options.endpoint);
+  const eventsUrl = buildEventsUrl(options.endpoint ?? DEFAULT_ENDPOINT);
   if (!eventsUrl) {
     return {
       ok: false,

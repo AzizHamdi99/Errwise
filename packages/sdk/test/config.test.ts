@@ -55,12 +55,13 @@ describe("resolveConfig", () => {
       "localhost:4000",
       "ftp://example.com",
       "nope",
-      undefined,
     ]) {
-      expect(resolveConfig({ ...valid, endpoint: endpoint as never }).ok).toBe(
-        false,
-      );
+      expect(resolveConfig({ ...valid, endpoint }).ok).toBe(false);
     }
+  });
+  it("uses the default endpoint when none is given", () => {
+    const result = resolveConfig({ apiKey });
+    expect(result.ok && result.config.eventsUrl).toMatch(/\/v1\/events$/);
   });
 
   it("does not throw on garbage options", () => {

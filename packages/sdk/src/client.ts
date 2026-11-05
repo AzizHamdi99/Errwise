@@ -5,8 +5,8 @@ import type { Logger } from "./logger";
 import type { CaptureOptions, ErrwiseEvent } from "./types";
 import { describeError } from "./utils";
 
-const DEFAULT_FLUSH_TIMEOUT_MS = 2_000;
-
+const DEFAULT_FLUSH_TIMEOUT_MS = 5_000;
+const DEFAULT_CLOSE_TIMEOUT_MS = 10_000;
 function isEventLike(value: unknown): value is ErrwiseEvent {
   return (
     typeof value === "object" &&
@@ -49,7 +49,7 @@ export class ErrwiseClient {
     return this.dispatcher.flush(timeoutMs);
   }
 
-  async close(timeoutMs: number = DEFAULT_FLUSH_TIMEOUT_MS): Promise<void> {
+  async close(timeoutMs: number = DEFAULT_CLOSE_TIMEOUT_MS): Promise<void> {
     this.closed = true;
     await this.dispatcher.close(timeoutMs);
   }
