@@ -43,7 +43,7 @@ export function OrgSwitcher({ onNavigate }: { onNavigate?: () => void }) {
           render={
             <button
               type="button"
-              className="flex w-full items-center gap-3 rounded-xl border bg-card p-3 text-left outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex w-full items-center gap-3 rounded-xl border bg-card p-3 text-left outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
             />
           }
         >
@@ -76,9 +76,9 @@ export function OrgSwitcher({ onNavigate }: { onNavigate?: () => void }) {
               key={item.id}
               aria-current={item.id === org?.id ? "true" : undefined}
               className={cn(
-                "relative gap-3 py-2",
+                "relative gap-3 py-2 cursor-pointer",
                 item.id === org?.id &&
-                  "bg-accent before:absolute before:inset-y-1.5 before:left-0 before:w-0.5 before:rounded-full before:bg-primary",
+                  "bg-accent before:absolute before:inset-y-1.5 before:left-0 before:w-0.5 before:rounded-full before:bg-primary ",
               )}
               onClick={() => handleSwitchOrganization(item.id)}
             >
@@ -93,7 +93,7 @@ export function OrgSwitcher({ onNavigate }: { onNavigate?: () => void }) {
           {orgs?.length ? <DropdownMenuSeparator /> : null}
 
           <DropdownMenuItem
-            className="gap-3 py-2"
+            className="gap-3 py-2 cursor-pointer"
             onClick={() => setCreateOpen(true)}
           >
             <Plus className="size-4" aria-hidden />

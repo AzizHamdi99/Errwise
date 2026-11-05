@@ -100,10 +100,19 @@ function CreateOrganizationForm({ onClose }: { onClose: () => void }) {
       </Field>
 
       <div className="flex justify-end gap-3">
-        <Button type="button" variant="outline" onClick={onClose}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onClose}
+          className="cursor-pointer"
+        >
           Cancel
         </Button>
-        <Button type="submit" disabled={create.isPending}>
+        <Button
+          type="submit"
+          disabled={create.isPending}
+          className="cursor-pointer"
+        >
           {create.isPending ? (
             <>
               <Loader2 className="animate-spin" aria-hidden />
