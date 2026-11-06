@@ -1,7 +1,14 @@
-import React from "react";
+import type { Metadata } from "next";
+import { Suspense } from "react";
+import { IssueDetailView } from "@/features/issues/components/issue-detail-view";
 
-const page = () => {
-  return <div></div>;
-};
+export const instant = false;
+export const metadata: Metadata = { title: "Issue" };
 
-export default page;
+export default function IssueDetailPage() {
+  return (
+    <Suspense>
+      <IssueDetailView />
+    </Suspense>
+  );
+}
