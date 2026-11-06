@@ -12,9 +12,13 @@ export const envSchema = z.object({
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(30),
   BCRYPT_ROUNDS: z.coerce.number().int().min(10).max(15).default(12),
   WEB_URL: z.string().url().default('http://localhost:3000'),
-  MAIL_DRIVER: z.enum(['console', 'resend']).default('console'),
+  MAIL_DRIVER: z.enum(['console', 'resend', 'smtp']).default('console'),
   MAIL_FROM: z.string().default('Errwise <onboarding@resend.dev>'),
   RESEND_API_KEY: z.string().optional(),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().int().positive().default(465),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
   INVITATION_TTL_DAYS: z.coerce.number().int().positive().default(7),
   INGEST_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(300),
 });
@@ -31,6 +35,14 @@ export function validateEnv(raw: Record<string, unknown>): Env {
   }
   if (parsed.data.MAIL_DRIVER === 'resend' && !parsed.data.RESEND_API_KEY) {
     throw new Error('RESEND_API_KEY is required when MAIL_DRIVER=resend');
+  }
+  if (
+    parsed.data.MAIL_DRIVER === 'smtp' &&
+    !(parsed.data.SMTP_HOST && parsed.data.SMTP_USER && parsed.data.SMTP_PASS)
+  ) {
+    throw new Error(
+      'SMTP_HOST, SMTP_USER and SMTP_PASS are required when MAIL_DRIVER=smtp',
+    );
   }
   return parsed.data;
 }
