@@ -795,7 +795,7 @@ __metadata:
     globals: "npm:^17.0.0"
     helmet: "npm:^8.3.0"
     jest: "npm:^30.0.0"
-    nodemailer: "npm:^10.1.1"
+    nodemailer: "npm:^10.3.1"
     prettier: "npm:^3.9.10"
     prisma: "npm:^6.19.3"
     reflect-metadata: "npm:^0.2.2"
@@ -11047,10 +11047,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nodemailer@npm:^10.1.1":
-  version: 10.1.1
-  resolution: "nodemailer@npm:10.1.1"
-  checksum: 10c0/1906b51e3f40f97acc7b5990b721a54581541e543117d3ff22255a173c4b7cc4a77212195b56ae2f69ecc021885d30714c5f7a2f05396b66e2ae4a7b864a87ae
+"nodemailer@npm:^10.3.1":
+  version: 10.3.1
+  resolution: "nodemailer@npm:10.3.1"
+  checksum: 10c0/a960ba9e7cb8f7135b828fb72bcdfd061bb914c6357578ed6613dd5303e8461710a1151210e95a92542461128e900038dd0794fc27bd74b297bd822013cfe8e8
   languageName: node
   linkType: hard
 

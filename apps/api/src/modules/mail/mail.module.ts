@@ -4,6 +4,7 @@ import type { Env } from '../../config/env';
 import { ConsoleMailService } from './console-mail.service';
 import { MailService } from './mail.service';
 import { ResendMailService } from './resend-mail.service';
+import { SmtpMailService } from './smtp-mail.service';
 
 @Module({
   providers: [
@@ -15,6 +16,17 @@ import { ResendMailService } from './resend-mail.service';
         if (driver === 'resend') {
           return new ResendMailService(
             config.get('RESEND_API_KEY', { infer: true }) as string,
+            config.get('MAIL_FROM', { infer: true }),
+          );
+        }
+        if (driver === 'smtp') {
+          return new SmtpMailService(
+            {
+              host: config.get('SMTP_HOST', { infer: true }) as string,
+              port: config.get('SMTP_PORT', { infer: true }),
+              user: config.get('SMTP_USER', { infer: true }) as string,
+              pass: config.get('SMTP_PASS', { infer: true }) as string,
+            },
             config.get('MAIL_FROM', { infer: true }),
           );
         }
