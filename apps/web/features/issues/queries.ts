@@ -4,7 +4,12 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import type { IssueStatus, Paginated, PublicIssue } from "@errwise/shared";
+import type {
+  IssueDetail,
+  IssueStatus,
+  Paginated,
+  PublicIssue,
+} from "@errwise/shared";
 import { api } from "@/lib/api";
 import type { IssueFilters } from "./use-issue-filters";
 
@@ -70,5 +75,15 @@ export function useHasIssues(orgId: string, projectId: string) {
     refetchInterval: (query) =>
       query.state.data?.items.length ? false : 3_000,
     select: (page) => page.items.length > 0,
+  });
+}
+
+export function useIssue(orgId: string, projectId: string, issueId: string) {
+  return useQuery({
+    queryKey: [...issuesRoot(projectId), "detail", issueId] as const,
+    queryFn: () => api<IssueDetail>(`${base(orgId, projectId)}/${issueId}`),
+    enabled: !!orgId && !!projectId && !!issueId,
+    refetchInterval: 20_000,
+    refetchIntervalInBackground: false,
   });
 }
