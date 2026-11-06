@@ -70,43 +70,20 @@ export function IssueDetailView() {
   const updateStatus = useUpdateIssueStatus(orgId, projectId);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const issue = query.data;
-  if (!issue) {
-    throw new Error("Issue data is missing");
-  }
-
+  // Hooks must run on every render, so this stays above the early returns.
   // ASSUMPTION 1: the detail response carries the events as `issue.events`
   const events = useMemo(
     () =>
-      [...(issue?.events ?? [])].sort((a, b) =>
+      [...(query.data?.events ?? [])].sort((a, b) =>
         b.timestamp.localeCompare(a.timestamp),
       ),
-    [issue],
+    [query.data],
   );
   const selected = events.find((e) => e.id === selectedId) ?? events[0] ?? null;
 
   if (!org || !project) return null; // ProjectGate guarantees this never happens
 
   const listHref = `/organizations/${orgId}/projects/${projectId}/issues`;
-
-  function setStatus(status: IssueStatus) {
-    if (!issue) return;
-    const previous = issue.status;
-    updateStatus.mutate(
-      { issueId: issue.id, status },
-      {
-        onSuccess: () =>
-          toast(STATUS_TOAST[status], {
-            action: {
-              label: "Undo",
-              onClick: () =>
-                updateStatus.mutate({ issueId: issue.id, status: previous }),
-            },
-          }),
-        onError: (error) => toast.error(getErrorMessage(error)),
-      },
-    );
-  }
 
   const backLink = (
     <Link
@@ -150,7 +127,28 @@ export function IssueDetailView() {
     );
   }
 
+  // Narrowed here: query.data is IssueDetail, not undefined.
   // ASSUMPTION 2: the detail response is the issue itself (PublicIssue & { events })
+  const issue = query.data;
+
+  function setStatus(status: IssueStatus) {
+    const previous = issue.status;
+    updateStatus.mutate(
+      { issueId: issue.id, status },
+      {
+        onSuccess: () =>
+          toast(STATUS_TOAST[status], {
+            action: {
+              label: "Undo",
+              onClick: () =>
+                updateStatus.mutate({ issueId: issue.id, status: previous }),
+            },
+          }),
+        onError: (error) => toast.error(getErrorMessage(error)),
+      },
+    );
+  }
+
   const { icon: StatusIcon, text } = issueStatusMeta(issue.status);
   const { type, message } = splitTitle(issue.title, issue.type);
   const releases =
