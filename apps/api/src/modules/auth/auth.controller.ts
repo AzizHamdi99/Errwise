@@ -1,29 +1,3 @@
-// import {
-//   Body,
-//   Controller,
-//   HttpCode,
-//   HttpStatus,
-//   Post,
-//   Req,
-//   Res,
-//   UnauthorizedException,
-// } from '@nestjs/common';
-// import type { Request, Response } from 'express';
-// import {
-//   LoginInput,
-//   PublicUser,
-//   RegisterInput,
-//   loginSchema,
-//   registerSchema,
-// } from '@errwise/shared';
-// import { REFRESH_COOKIE } from '../../common/constants';
-// import {
-//   Client,
-//   ClientMeta,
-// } from '../../common/decorators/client-meta.decorator';
-// import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
-// import { AuthCookieService } from './auth-cookie.service';
-// import { AuthService } from './auth.service';
 import {
   Body,
   Controller,
@@ -33,6 +7,8 @@ import {
   Req,
   Res,
   UnauthorizedException,
+  Get,
+  UseGuards,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { loginSchema, registerSchema } from '@errwise/shared';
@@ -43,13 +19,47 @@ import type { ClientMeta } from '../../common/decorators/client-meta.decorator';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { AuthCookieService } from './auth-cookie.service';
 import { AuthService } from './auth.service';
+import { ConfigService } from '@nestjs/config';
+import type { Env } from '../../config/env';
+import { GoogleAuthGuard } from './guards/google-auth.guard';
+import type { GoogleProfile } from './google.strategy';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly auth: AuthService,
     private readonly cookies: AuthCookieService,
+    private readonly config: ConfigService<Env, true>,
   ) {}
+
+  /** Starts the flow: Passport redirects the browser to Google. */
+  @Get('google')
+  @UseGuards(GoogleAuthGuard)
+  googleStart(): void {}
+
+  @Get('google/callback')
+  @UseGuards(GoogleAuthGuard)
+  async googleCallback(
+    @Req() req: Request & { user?: GoogleProfile | false },
+    @Client() meta: ClientMeta,
+    @Res() res: Response,
+  ): Promise<void> {
+    const webUrl = this.config.get('WEB_URL', { infer: true });
+    if (!req.user) {
+      res.redirect(`${webUrl}/login?error=google`);
+      return;
+    }
+    try {
+      const { accessToken, refreshToken } = await this.auth.googleLogin(
+        req.user,
+        meta,
+      );
+      this.cookies.setSession(res, accessToken, refreshToken);
+      res.redirect(`${webUrl}/organizations`);
+    } catch {
+      res.redirect(`${webUrl}/login?error=google`);
+    }
+  }
 
   @Post('register')
   async register(
