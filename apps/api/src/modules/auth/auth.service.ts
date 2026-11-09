@@ -6,7 +6,9 @@ import { PasswordHasher } from '../../common/security/password-hasher.service';
 import { TokenService } from '../../common/security/token.service';
 import { toPublicUser } from '../users/users.mapper';
 import { UsersService } from '../users/users.service';
+import type { GoogleProfile } from './google.strategy';
 import { RefreshTokenService } from './refresh-token.service';
+import { GoogleAuthService } from './google-auth.service';
 
 export interface Session {
   accessToken: string;
@@ -21,6 +23,7 @@ export class AuthService {
     private readonly hasher: PasswordHasher,
     private readonly tokens: TokenService,
     private readonly refreshTokens: RefreshTokenService,
+    private readonly google: GoogleAuthService,
   ) {}
 
   async register(input: RegisterInput, meta: ClientMeta): Promise<Session> {
@@ -44,6 +47,14 @@ export class AuthService {
 
     const updated = await this.users.touchLastLogin(user.id);
     return this.startSession(updated, meta);
+  }
+
+  async googleLogin(
+    profile: GoogleProfile,
+    meta: ClientMeta,
+  ): Promise<Session> {
+    const user = await this.google.resolveUser(profile);
+    return this.startSession(user, meta);
   }
 
   async refresh(rawRefreshToken: string, meta: ClientMeta): Promise<Session> {
