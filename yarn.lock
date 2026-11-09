@@ -776,7 +776,7 @@ __metadata:
     "@nestjs/core": "npm:^11.0.1"
     "@nestjs/jwt": "npm:^11"
     "@nestjs/mapped-types": "npm:^2"
-    "@nestjs/passport": "npm:^12.0.1"
+    "@nestjs/passport": "npm:^11.0.5"
     "@nestjs/platform-express": "npm:^11.0.1"
     "@nestjs/schematics": "npm:^11.0.0"
     "@nestjs/swagger": "npm:^11"
@@ -2766,13 +2766,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nestjs/passport@npm:^12.0.1":
-  version: 12.0.1
-  resolution: "@nestjs/passport@npm:12.0.1"
+"@nestjs/passport@npm:^11.0.5":
+  version: 11.0.5
+  resolution: "@nestjs/passport@npm:11.0.5"
   peerDependencies:
-    "@nestjs/common": ^11.0.0 || ^12.0.0
+    "@nestjs/common": ^10.0.0 || ^11.0.0
     passport: ^0.5.0 || ^0.6.0 || ^0.7.0
-  checksum: 10c0/b54bc19d2eddbe341a256b5bbe963d2df6c2c913b20945063461003112f918d86e1b502ad5ecb4ec8b260faad6bd8afabd74a64595f27f7452a096284e597ddf
+  checksum: 10c0/24175f6791abf02b70c3c0705ce56fefd3981fdece0da7e58325f790ce71aa6932b31a87a2ceaa52b6d9d8edab3a7c049f6081e4b4d59bcdfcaa00383b64ae02
   languageName: node
   linkType: hard
 
