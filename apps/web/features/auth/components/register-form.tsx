@@ -19,16 +19,16 @@ import { safeNext } from "@/lib/safe-redirect";
 import { useRegister } from "../queries";
 import { PasswordStrength } from "./password-strength";
 import { authHref } from "@/lib/auth-links";
+import { GoogleButton, OrDivider } from "./google-button";
 
 export function RegisterForm() {
   const router = useRouter();
-  //const rawNext = useSearchParams().get("next");
-
-  const registerUser = useRegister();
-  const [formError, setFormError] = useState<string | null>(null);
   const params = useSearchParams();
   const rawNext = params.get("next");
   const invitedEmail = params.get("email") ?? "";
+
+  const registerUser = useRegister();
+  const [formError, setFormError] = useState<string | null>(null);
 
   const {
     register,
@@ -136,7 +136,11 @@ export function RegisterForm() {
           By creating an account, you agree to use Errwise responsibly.
         </p>
 
-        <Button type="submit" disabled={registerUser.isPending}>
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={registerUser.isPending}
+        >
           {registerUser.isPending ? (
             <>
               <Loader2 className="animate-spin" aria-hidden />
@@ -148,7 +152,7 @@ export function RegisterForm() {
         </Button>
       </form>
 
-      <div className="border-t pt-6 text-sm text-muted-foreground">
+      <p className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}
         <Link
           href={loginHref}
@@ -156,7 +160,15 @@ export function RegisterForm() {
         >
           Log in
         </Link>
-      </div>
+      </p>
+
+      {/* Google can return a different email than the invited one, so hide it for invitations */}
+      {!invitedEmail ? (
+        <>
+          <OrDivider />
+          <GoogleButton label="Sign up with Google" />
+        </>
+      ) : null}
     </div>
   );
 }

@@ -5,6 +5,8 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { RefreshTokenRepository } from './refresh-token.repository';
 import { RefreshTokenService } from './refresh-token.service';
+import { GoogleStrategy } from './google.strategy';
+import { GoogleAuthService } from './google-auth.service';
 
 @Module({
   imports: [UsersModule],
@@ -14,6 +16,8 @@ import { RefreshTokenService } from './refresh-token.service';
     AuthCookieService,
     RefreshTokenService,
     RefreshTokenRepository,
+    GoogleStrategy,
+    GoogleAuthService,
   ],
 })
 export class AuthModule {}
