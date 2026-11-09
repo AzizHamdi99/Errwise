@@ -21,7 +21,9 @@
     "db:studio": "yarn workspace @errwise/api prisma studio",
     "db:generate": "yarn workspace @errwise/api prisma generate",
     "db:status": "yarn workspace @errwise/api prisma migrate status",
-    "db:reset": "yarn workspace @errwise/api prisma migrate reset"
+    "db:reset": "yarn workspace @errwise/api prisma migrate reset",
+    "db:status:prod": "yarn workspace @errwise/api db:status:prod",
+    "db:migrate:prod": "yarn workspace @errwise/api db:migrate:prod"
   },
   "devDependencies": {
     "turbo": "^2.11.7"

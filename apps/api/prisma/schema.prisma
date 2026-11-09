@@ -16,6 +16,7 @@ model User {
   invitationsSent Invitation[] @relation("InvitationInviter")
   refreshTokens RefreshToken[]
   emailVerifiedAt DateTime?    @db.Timestamptz(3)
+  googleId        String?      @unique
   lastLoginAt     DateTime?    @db.Timestamptz(3)
   createdAt       DateTime     @default(now()) @db.Timestamptz(3)
   updatedAt       DateTime     @updatedAt @db.Timestamptz(3)
