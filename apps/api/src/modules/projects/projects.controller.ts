@@ -40,7 +40,11 @@ export class ProjectsController {
     body: CreateProjectInput,
     @CurrentMembership() membership: OrgMembership,
   ): Promise<PublicProject> {
-    return this.projects.create(membership.organizationId, body);
+    return this.projects.create(
+      membership.organizationId,
+      membership.userId,
+      body,
+    );
   }
 
   @Get()
