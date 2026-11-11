@@ -19,6 +19,7 @@ import { InvitationsModule } from './modules/invitations/invitations.module';
 import { MailModule } from './modules/mail/mail.module';
 import { IngestionModule } from './modules/ingestion/ingestion.module';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
+import { MessagingModule } from './modules/messaging/messaging.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { SubscriptionsModule } from './modules/subscriptions/subscriptions.modul
     MailModule,
     IngestionModule,
     SubscriptionsModule,
+    MessagingModule,
   ],
   controllers: [AppController],
   providers: [

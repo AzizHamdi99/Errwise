@@ -4,9 +4,10 @@ import { IngestRateLimitGuard } from './ingest-rate-limit.guard';
 import { IngestionController } from './ingestion.controller';
 import { IngestionRepository } from './ingestion.repository';
 import { IngestionService } from './ingestion.service';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [ApiKeysModule],
+  imports: [ApiKeysModule, NotificationsModule],
   controllers: [IngestionController],
   providers: [IngestionService, IngestionRepository, IngestRateLimitGuard],
 })
