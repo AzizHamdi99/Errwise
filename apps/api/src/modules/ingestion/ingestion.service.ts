@@ -9,6 +9,11 @@ import {
 } from './fingerprint';
 import { IngestionRepository, StoreEventData } from './ingestion.repository';
 
+import {
+  IssueAlertDispatcher,
+  type NewIssueAlert,
+} from '../notifications/issue-alert-dispatcher';
+
 const MAX_FUTURE_MS = 5 * 60_000;
 const MAX_AGE_MS = 30 * 86_400_000;
 
@@ -29,7 +34,10 @@ function resolveTimestamp(value: string | undefined, now: Date): Date {
 
 @Injectable()
 export class IngestionService {
-  constructor(private readonly repo: IngestionRepository) {}
+  constructor(
+    private readonly repo: IngestionRepository,
+    private readonly alerts: IssueAlertDispatcher,
+  ) {}
 
   async ingest(
     apiKey: ApiKeyContext,
@@ -38,15 +46,48 @@ export class IngestionService {
     const events = Array.isArray(input) ? input : [input];
     const now = new Date();
 
+    // let accepted = 0;
+    // let duplicates = 0;
+    // for (const event of events) {
+    //   const stored = await this.repo.store(
+    //     this.toRecord(apiKey.projectId, event, now),
+    //   );
+    //   if (stored) accepted += 1;
+    //   else duplicates += 1;
+    // }
+    // return { accepted, duplicates };
     let accepted = 0;
     let duplicates = 0;
+    const newIssues: NewIssueAlert[] = [];
+
+    // for (const event of events) {
+    //   const result = await this.repo.store(
+    //     this.toRecord(apiKey.projectId, event, now),
+    //   );
+    //   if (result) accepted += 1;
+    //   else duplicates += 1;
+    // }
     for (const event of events) {
-      const stored = await this.repo.store(
+      const result = await this.repo.store(
         this.toRecord(apiKey.projectId, event, now),
       );
-      if (stored) accepted += 1;
-      else duplicates += 1;
+      if (!result) {
+        duplicates += 1;
+        continue;
+      }
+      accepted += 1;
+      if (result.issueCreated) {
+        newIssues.push({
+          projectId: apiKey.projectId, // from the API key, never the body
+          issueId: result.issueId,
+          environment: event.environment,
+        });
+      }
     }
+    // After every transaction is committed. We await it on purpose: on serverless
+    // the function can be frozen once the response is sent. It only costs time
+    // when a batch created a new issue, and it never throws.
+    await this.alerts.dispatch(newIssues);
     return { accepted, duplicates };
   }
 
