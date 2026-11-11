@@ -1,18 +1,7 @@
 import { escapeHtml } from '../../../common/utils/html';
 import type { MailMessage } from '../../mail/mail.service';
 
-const COLORS = {
-  pageBg: '#0a0a0b',
-  cardBg: '#111113',
-  border: '#27272a',
-  text: '#fafafa',
-  muted: '#a1a1aa',
-  accent: '#6366f1', // button color
-  accentText: '#ffffff',
-};
-const FONT =
-  "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
-
+import { COLORS, FONT } from '../../mail/email-theme';
 export function invitationEmail(params: {
   to: string;
   organizationName: string;

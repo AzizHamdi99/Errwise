@@ -23,7 +23,10 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "postinstall": "prisma skills sync || exit 0",
     "db:status:prod": "dotenv -e .env.production -- prisma migrate status",
-    "db:migrate:prod": "dotenv -e .env.production -- prisma migrate deploy"
+    "db:migrate:prod": "dotenv -e .env.production -- prisma migrate deploy",
+    "start:worker": "nest start --entryFile worker/worker",
+    "start:worker:dev": "nest start --entryFile worker/worker --watch",
+    "start:worker:prod": "node dist/worker/worker"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -35,6 +38,7 @@
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11",
     "@prisma/client": "^6.19.3",
+    "amqplib": "^0.10",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "helmet": "^8.3.0",
@@ -52,6 +56,7 @@
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
+    "@types/amqplib": "^0.10",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",

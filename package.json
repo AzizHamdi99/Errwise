@@ -10,6 +10,8 @@
     "dev": "turbo run dev",
     "dev:web": "yarn workspace @errwise/web dev",
     "dev:api": "yarn workspace @errwise/api start:dev",
+    "dev:worker": "yarn workspace @errwise/api start:worker:dev",
+    "start:worker": "yarn workspace @errwise/api start:worker:prod",
     "build": "turbo run build",
     "build:web": "yarn workspace @errwise/web build",
     "build:api": "yarn workspace @errwise/api build",
