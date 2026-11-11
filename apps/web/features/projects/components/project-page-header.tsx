@@ -4,6 +4,7 @@ import { Eyebrow } from "@/components/shared/eyebrow";
 import { getPlatform } from "../platforms";
 import { useCurrentProject } from "../use-current-project";
 import { ProjectTabs } from "./project-tabs";
+import { NotifyToggle } from "./notify-toggle";
 
 interface Props {
   title: string;
@@ -32,7 +33,10 @@ export function ProjectPageHeader({
           <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
           <p className="text-sm text-muted-foreground">{description}</p>
         </div>
-        {actions}
+        <div className="flex flex-wrap items-center gap-2">
+          <NotifyToggle orgId={org.id} projectId={project.id} />
+          {actions}
+        </div>{" "}
       </div>
       <ProjectTabs orgId={org.id} projectId={project.id} />
     </header>

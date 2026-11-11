@@ -21,6 +21,7 @@ export class ProjectsService {
 
   async create(
     organizationId: string,
+    userId: string,
     input: CreateProjectInput,
   ): Promise<PublicProject> {
     const base = slugify(input.name);
@@ -28,13 +29,16 @@ export class ProjectsService {
     for (let attempt = 0; attempt < MAX_SLUG_ATTEMPTS; attempt++) {
       const slug = attempt === 0 ? base : `${base}-${randomSlugSuffix()}`;
       try {
-        const project = await this.repo.create({
-          organizationId,
-          name: input.name,
-          slug,
-          platform: input.platform,
-          retentionDays: input.retentionDays,
-        });
+        const project = await this.repo.create(
+          {
+            organizationId,
+            name: input.name,
+            slug,
+            platform: input.platform,
+            retentionDays: input.retentionDays,
+          },
+          userId,
+        );
         return toPublicProject(project);
       } catch (e) {
         const taken =

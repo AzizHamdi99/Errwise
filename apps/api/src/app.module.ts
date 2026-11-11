@@ -18,6 +18,7 @@ import { SecurityModule } from './common/security/security.module';
 import { InvitationsModule } from './modules/invitations/invitations.module';
 import { MailModule } from './modules/mail/mail.module';
 import { IngestionModule } from './modules/ingestion/ingestion.module';
+import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { IngestionModule } from './modules/ingestion/ingestion.module';
     InvitationsModule,
     MailModule,
     IngestionModule,
+    SubscriptionsModule,
   ],
   controllers: [AppController],
   providers: [

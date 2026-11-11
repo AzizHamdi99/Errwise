@@ -11,5 +11,21 @@ services:
       test: ["CMD-SHELL", "pg_isready -U errwise"]
       interval: 5s
       retries: 10
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: errwise
+      RABBITMQ_DEFAULT_PASS: errwise
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 volumes:
   dbdata:
+  rabbitmq_data:

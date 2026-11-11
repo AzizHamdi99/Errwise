@@ -20,8 +20,14 @@ export interface UpdateProjectData {
 export class ProjectsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(data: CreateProjectData): Promise<Project> {
-    return this.prisma.project.create({ data });
+  create(data: CreateProjectData, creatorId: string): Promise<Project> {
+    return this.prisma.project.create({
+      data: {
+        ...data,
+        // the creator follows the project from the start (opt-in for the others)
+        subscriptions: { create: { userId: creatorId } },
+      },
+    });
   }
 
   listByOrganization(organizationId: string): Promise<Project[]> {

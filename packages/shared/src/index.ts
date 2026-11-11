@@ -6,3 +6,5 @@ export * from "./projects";
 export * from "./api-keys";
 export * from "./events";
 export * from "./issues";
+export * from "./subscriptions";
+export * from "./messaging";

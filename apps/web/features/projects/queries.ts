@@ -3,6 +3,8 @@ import type {
   CreateProjectInput,
   PublicProject,
   UpdateProjectInput,
+  PublicSubscription,
+  UpdateSubscriptionInput,
 } from "@errwise/shared";
 import { api } from "@/lib/api";
 
@@ -45,3 +47,42 @@ export const useDeleteProject = (orgId: string, projectId: string) =>
     mutationFn: () =>
       api<void>(`${base(orgId)}/${projectId}`, { method: "DELETE" }),
   });
+
+// Separate key so project updates don't refetch subscriptions.
+export const subscriptionKey = (orgId: string, projectId: string) =>
+  ["orgs", orgId, "subscriptions", projectId] as const;
+
+export const useSubscription = (orgId: string, projectId: string) =>
+  useQuery({
+    queryKey: subscriptionKey(orgId, projectId),
+    queryFn: () =>
+      api<PublicSubscription>(`${base(orgId)}/${projectId}/subscription`),
+    enabled: !!orgId && !!projectId,
+  });
+
+export function useUpdateSubscription(orgId: string, projectId: string) {
+  const queryClient = useQueryClient();
+  const key = subscriptionKey(orgId, projectId);
+
+  return useMutation({
+    mutationFn: (input: UpdateSubscriptionInput) =>
+      api<PublicSubscription>(`${base(orgId)}/${projectId}/subscription`, {
+        method: "PUT",
+        body: input,
+      }),
+    // Optimistic update: flip the button now, roll back if the request fails.
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<PublicSubscription>(key);
+      queryClient.setQueryData<PublicSubscription>(key, {
+        projectId,
+        ...input,
+      });
+      return { previous };
+    },
+    onError: (_error, _input, context) => {
+      if (context?.previous) queryClient.setQueryData(key, context.previous);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: key }),
+  });
+}

@@ -9,30 +9,31 @@ datasource db {
 }
 
 model User {
-  id              String       @id @default(uuid(7)) @db.Uuid
-  email           String       @unique
+  id              String                @id @default(uuid(7)) @db.Uuid
+  email           String                @unique
   name            String?
   passwordHash    String?
-  invitationsSent Invitation[] @relation("InvitationInviter")
-  refreshTokens RefreshToken[]
-  emailVerifiedAt DateTime?    @db.Timestamptz(3)
-  googleId        String?      @unique
-  lastLoginAt     DateTime?    @db.Timestamptz(3)
-  createdAt       DateTime     @default(now()) @db.Timestamptz(3)
-  updatedAt       DateTime     @updatedAt @db.Timestamptz(3)
+  invitationsSent Invitation[]          @relation("InvitationInviter")
+  refreshTokens   RefreshToken[]
+  emailVerifiedAt DateTime?             @db.Timestamptz(3)
+  googleId        String?               @unique
+  lastLoginAt     DateTime?             @db.Timestamptz(3)
+  createdAt       DateTime              @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime              @updatedAt @db.Timestamptz(3)
   memberships     Membership[]
+  subscriptions   ProjectSubscription[]
 }
 
 model Organization {
-  id        String       @id @default(uuid(7)) @db.Uuid
-  name      String
-  slug      String       @unique
+  id          String       @id @default(uuid(7)) @db.Uuid
+  name        String
+  slug        String       @unique
   invitations Invitation[]
-  createdAt DateTime     @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime     @updatedAt @db.Timestamptz(3)
-  deletedAt DateTime?    @db.Timestamptz(3)
-  members   Membership[]
-  projects  Project[]
+  createdAt   DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime     @updatedAt @db.Timestamptz(3)
+  deletedAt   DateTime?    @db.Timestamptz(3)
+  members     Membership[]
+  projects    Project[]
 }
 
 model Membership {
@@ -48,33 +49,35 @@ model Membership {
 }
 
 model Project {
-  id             String       @id @default(uuid(7)) @db.Uuid
-  organizationId String       @db.Uuid
+  id             String                @id @default(uuid(7)) @db.Uuid
+  organizationId String                @db.Uuid
   name           String
   slug           String
-  platform       String       @default("node")
-  retentionDays  Int          @default(30)
-  createdAt      DateTime     @default(now()) @db.Timestamptz(3)
-  updatedAt      DateTime     @updatedAt @db.Timestamptz(3)
-  deletedAt      DateTime?    @db.Timestamptz(3)
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  platform       String                @default("node")
+  retentionDays  Int                   @default(30)
+  createdAt      DateTime              @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime              @updatedAt @db.Timestamptz(3)
+  deletedAt      DateTime?             @db.Timestamptz(3)
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   apiKeys        ApiKey[]
   issues         Issue[]
   events         Event[]
+  subscriptions  ProjectSubscription[]
 
   @@unique([organizationId, slug])
 }
+
 model Invitation {
-  id             String    @id @default(uuid(7)) @db.Uuid
-  organizationId String    @db.Uuid
+  id             String       @id @default(uuid(7)) @db.Uuid
+  organizationId String       @db.Uuid
   email          String
-  role           String    @default("member")
-  tokenHash      String    @unique
-  invitedById    String?   @db.Uuid
-  expiresAt      DateTime  @db.Timestamptz(3)
-  acceptedAt     DateTime? @db.Timestamptz(3)
-  revokedAt      DateTime? @db.Timestamptz(3)
-  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
+  role           String       @default("member")
+  tokenHash      String       @unique
+  invitedById    String?      @db.Uuid
+  expiresAt      DateTime     @db.Timestamptz(3)
+  acceptedAt     DateTime?    @db.Timestamptz(3)
+  revokedAt      DateTime?    @db.Timestamptz(3)
+  createdAt      DateTime     @default(now()) @db.Timestamptz(3)
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   invitedBy      User?        @relation("InvitationInviter", fields: [invitedById], references: [id], onDelete: SetNull)
 
@@ -128,6 +131,7 @@ model Issue {
   firstRelease       String?
   lastRelease        String?
   resolvedAt         DateTime? @db.Timestamptz(3)
+  lastNotifiedAt     DateTime? @db.Timestamptz(3)
   project            Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
   events             Event[]
 
@@ -157,4 +161,16 @@ model Event {
   @@unique([projectId, eventId])
   @@index([issueId, timestamp(sort: Desc)])
   @@index([projectId, timestamp(sort: Desc)])
+}
+
+model ProjectSubscription {
+  userId         String   @db.Uuid
+  projectId      String   @db.Uuid
+  emailNewIssues Boolean  @default(true)
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@id([userId, projectId])
+  @@index([projectId])
 }
