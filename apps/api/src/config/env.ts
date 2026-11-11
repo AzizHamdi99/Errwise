@@ -24,7 +24,8 @@ export const envSchema = z.object({
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   GOOGLE_CALLBACK_URL: z.string().url().optional(),
-  RABBITMQ_URL: z.string().url(),
+  RABBITMQ_URL: z.string().url().optional(),
+  ALERT_DELIVERY: z.enum(['queue', 'direct']).default('queue'),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -47,6 +48,9 @@ export function validateEnv(raw: Record<string, unknown>): Env {
     throw new Error(
       'SMTP_HOST, SMTP_USER and SMTP_PASS are required when MAIL_DRIVER=smtp',
     );
+  }
+  if (parsed.data.ALERT_DELIVERY === 'queue' && !parsed.data.RABBITMQ_URL) {
+    throw new Error('RABBITMQ_URL is required when ALERT_DELIVERY=queue');
   }
   return parsed.data;
 }
