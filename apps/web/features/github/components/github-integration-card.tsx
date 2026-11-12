@@ -147,7 +147,9 @@ function OwnerControls({
   const disconnect = useDisconnectGithub(orgId, projectId);
   const updateAccess = useStartGithubConnect(orgId, projectId);
 
-  function onSelect(fullName: string) {
+  function onSelect(fullName: string | null) {
+    if (fullName === null) return;
+
     select.mutate(fullName, {
       onSuccess: () => toast.success(`Issues will be created in ${fullName}`),
       onError: (error) => toast.error(getErrorMessage(error)),
@@ -178,7 +180,7 @@ function OwnerControls({
           </div>
         ) : (
           <Select
-            value={repo ?? ""}
+            value={repo}
             onValueChange={onSelect}
             disabled={select.isPending}
           >
