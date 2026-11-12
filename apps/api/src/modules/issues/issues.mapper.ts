@@ -27,6 +27,10 @@ export function toPublicIssue(
     firstRelease: issue.firstRelease,
     lastRelease: issue.lastRelease,
     resolvedAt: issue.resolvedAt?.toISOString() ?? null,
+    github:
+      issue.githubIssueNumber !== null && issue.githubIssueUrl
+        ? { number: issue.githubIssueNumber, url: issue.githubIssueUrl }
+        : null,
   };
 }
 
