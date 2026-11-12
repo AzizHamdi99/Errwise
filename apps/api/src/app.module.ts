@@ -20,6 +20,7 @@ import { MailModule } from './modules/mail/mail.module';
 import { IngestionModule } from './modules/ingestion/ingestion.module';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 import { MessagingModule } from './modules/messaging/messaging.module';
+import { GithubModule } from './modules/github/github.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { MessagingModule } from './modules/messaging/messaging.module';
     IngestionModule,
     SubscriptionsModule,
     MessagingModule,
+    GithubModule,
   ],
   controllers: [AppController],
   providers: [
