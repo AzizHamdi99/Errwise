@@ -59,6 +59,8 @@ model Project {
   updatedAt      DateTime              @updatedAt @db.Timestamptz(3)
   deletedAt      DateTime?             @db.Timestamptz(3)
   organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  githubInstallationId String?
+  githubRepo           String?
   apiKeys        ApiKey[]
   issues         Issue[]
   events         Event[]
@@ -131,6 +133,9 @@ model Issue {
   firstRelease       String?
   lastRelease        String?
   resolvedAt         DateTime? @db.Timestamptz(3)
+  githubIssueNumber  Int?
+  githubIssueUrl     String?
+  githubIssueClaimedAt DateTime? @db.Timestamptz(3)
   lastNotifiedAt     DateTime? @db.Timestamptz(3)
   project            Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
   events             Event[]
