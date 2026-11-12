@@ -8,3 +8,4 @@ export * from "./events";
 export * from "./issues";
 export * from "./subscriptions";
 export * from "./messaging";
+export * from "./github";

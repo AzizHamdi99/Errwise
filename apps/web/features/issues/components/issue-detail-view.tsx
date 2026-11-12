@@ -19,6 +19,8 @@ import { IssueStatusBadge, issueStatusMeta } from "./issue-status-badge";
 import { IssueStatusControl } from "./issue-status-control";
 import { RecentEventsCard } from "./recent-events-card";
 import { StackTraceCard } from "./stack-trace-card";
+import { GithubIssueButton } from "@/features/github/components/github-issue-button";
+import { can } from "@/lib/permissions";
 
 const STATUS_TOAST: Record<IssueStatus, string> = {
   resolved: "Issue resolved",
@@ -211,11 +213,25 @@ export function IssueDetailView() {
           </div>
         </div>
 
-        <IssueStatusControl
+        {/* <IssueStatusControl
           status={issue.status}
           pending={updateStatus.isPending}
           onChange={setStatus}
-        />
+        /> */}
+        <div className="flex flex-wrap items-center gap-2">
+          <GithubIssueButton
+            orgId={orgId}
+            projectId={projectId}
+            issueId={issue.id}
+            link={issue.github}
+            canManage={can(org.role, "github.manage")}
+          />
+          <IssueStatusControl
+            status={issue.status}
+            pending={updateStatus.isPending}
+            onChange={setStatus}
+          />
+        </div>
       </header>
 
       {selected ? (

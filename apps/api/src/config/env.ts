@@ -26,6 +26,12 @@ export const envSchema = z.object({
   GOOGLE_CALLBACK_URL: z.string().url().optional(),
   RABBITMQ_URL: z.string().url().optional(),
   ALERT_DELIVERY: z.enum(['queue', 'direct']).default('queue'),
+  GITHUB_APP_ID: z.string().min(1),
+  GITHUB_APP_SLUG: z.string().min(1),
+  GITHUB_APP_CLIENT_ID: z.string().min(1),
+  GITHUB_APP_CLIENT_SECRET: z.string().min(1),
+  GITHUB_APP_PRIVATE_KEY_BASE64: z.string().min(32),
+  GITHUB_STATE_SECRET: z.string().min(32),
 });
 
 export type Env = z.infer<typeof envSchema>;

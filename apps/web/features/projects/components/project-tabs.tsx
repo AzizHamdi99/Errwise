@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 const TABS = [
   { label: "Issues", segment: "issues" },
   { label: "API keys", segment: "api-keys" },
+  { label: "Integrations", segment: "integrations" },
   { label: "Settings", segment: "settings" },
 ] as const;
 
