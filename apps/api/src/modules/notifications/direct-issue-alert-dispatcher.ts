@@ -38,14 +38,13 @@
 //     }
 //   }
 // }
-
 import { Logger } from '@nestjs/common';
 import {
   IssueAlertDispatcher,
   type IssueAlerts,
 } from './issue-alert-dispatcher';
 import type { NewIssueNotifier } from './new-issue-notifier';
-import type { RegressionNotifier } from './regression-notifier';
+import type { RegressionHandler } from './regression-handler';
 
 // A serverless function has a time limit: stop sending when the budget is used.
 const TIME_BUDGET_MS = 8_000;
@@ -62,7 +61,7 @@ export class DirectIssueAlertDispatcher extends IssueAlertDispatcher {
 
   constructor(
     private readonly newIssues: NewIssueNotifier,
-    private readonly regressions: RegressionNotifier,
+    private readonly regressions: RegressionHandler,
   ) {
     super();
   }
@@ -77,7 +76,7 @@ export class DirectIssueAlertDispatcher extends IssueAlertDispatcher {
       ...regressed.map((a) => ({
         label: 'Regression',
         issueId: a.issueId,
-        run: () => this.regressions.notify(a.issueId, a.environment),
+        run: () => this.regressions.handle(a.issueId, a.environment),
       })),
     ];
 
