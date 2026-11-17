@@ -162,4 +162,46 @@ export class GithubRepository {
       }),
     ]);
   }
+  /** What the regression sync needs: the GitHub link and the project connection. */
+  findRegressionContext(issueId: string) {
+    return this.prisma.issue.findUnique({
+      where: { id: issueId },
+      select: {
+        id: true,
+        projectId: true,
+        githubIssueNumber: true,
+        githubState: true,
+        lastRelease: true,
+        regressionCount: true,
+        project: {
+          select: {
+            organizationId: true,
+            deletedAt: true,
+            githubInstallationId: true,
+            githubRepo: true,
+          },
+        },
+      },
+    });
+  }
+
+  /**
+   * Atomically claims the right to reopen the GitHub issue. Only one concurrent
+   * caller gets `true`, so a retry never posts a second comment.
+   */
+  async claimGithubReopen(issueId: string): Promise<boolean> {
+    const { count } = await this.prisma.issue.updateMany({
+      where: { id: issueId, githubState: 'closed' },
+      data: { githubState: 'open' },
+    });
+    return count === 1;
+  }
+
+  /** Gives the claim back when GitHub could not be updated, so a retry can try again. */
+  async releaseGithubReopen(issueId: string): Promise<void> {
+    await this.prisma.issue.updateMany({
+      where: { id: issueId, githubState: 'open' },
+      data: { githubState: 'closed' },
+    });
+  }
 }

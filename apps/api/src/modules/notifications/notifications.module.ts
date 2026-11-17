@@ -44,25 +44,28 @@ import { NewIssueNotifier } from './new-issue-notifier';
 import { NotificationsRepository } from './notifications.repository';
 import { QueueIssueAlertDispatcher } from './queue-issue-alert-dispatcher';
 import { RegressionNotifier } from './regression-notifier';
+import { GithubModule } from '../github/github.module';
+import { RegressionHandler } from './regression-handler';
 
 @Module({
-  imports: [MailModule, MessagingModule],
+  imports: [MailModule, MessagingModule, GithubModule],
   providers: [
     NotificationsRepository,
     NewIssueNotifier,
     RegressionNotifier,
+    RegressionHandler,
     {
       provide: IssueAlertDispatcher,
       inject: [
         ConfigService,
         NewIssueNotifier,
-        RegressionNotifier,
+        RegressionHandler,
         MessagePublisher,
       ],
       useFactory: (
         config: ConfigService<Env, true>,
         newIssues: NewIssueNotifier,
-        regressions: RegressionNotifier,
+        regressions: RegressionHandler,
         publisher: MessagePublisher,
       ): IssueAlertDispatcher =>
         config.get('ALERT_DELIVERY', { infer: true }) === 'direct'
@@ -70,6 +73,6 @@ import { RegressionNotifier } from './regression-notifier';
           : new QueueIssueAlertDispatcher(publisher),
     },
   ],
-  exports: [IssueAlertDispatcher, NewIssueNotifier, RegressionNotifier],
+  exports: [IssueAlertDispatcher, NewIssueNotifier, RegressionHandler],
 })
 export class NotificationsModule {}
