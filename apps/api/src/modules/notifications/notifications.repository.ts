@@ -34,4 +34,23 @@ export class NotificationsRepository {
       data: { lastNotifiedAt: new Date() },
     });
   }
+  /**
+   * Records that the regression at `regressedAt` was notified. Storing that value
+   * (not "now") means a newer regression that happened meanwhile stays un-notified.
+   */
+  async markRegressionNotified(
+    issueId: string,
+    regressedAt: Date,
+  ): Promise<void> {
+    await this.prisma.issue.updateMany({
+      where: {
+        id: issueId,
+        OR: [
+          { lastRegressionNotifiedAt: null },
+          { lastRegressionNotifiedAt: { lt: regressedAt } },
+        ],
+      },
+      data: { lastRegressionNotifiedAt: regressedAt },
+    });
+  }
 }

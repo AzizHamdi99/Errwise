@@ -1,11 +1,231 @@
+// import { Injectable } from '@nestjs/common';
+// import { Prisma } from '@prisma/client';
+// import { PrismaService } from '../../database/prisma.service';
+// export interface StoreResult {
+//   issueId: string;
+//   /** True when this event created the issue (first occurrence of the error). */
+//   issueCreated: boolean;
+// }
+// export interface StoreEventData {
+//   projectId: string;
+//   fingerprint: string;
+//   fingerprintVersion: number;
+//   title: string;
+//   eventId: string;
+//   level: string;
+//   type: string;
+//   message: string;
+//   stack?: string;
+//   platform: string;
+//   environment: string;
+//   release?: string;
+//   sdk?: string;
+//   context?: Prisma.InputJsonObject;
+//   timestamp: Date;
+// }
+
+// /** For a unique violation (P2002), returns the constraint info as text. */
+// function conflictInfo(error: unknown): string | null {
+//   if (
+//     error instanceof Prisma.PrismaClientKnownRequestError &&
+//     error.code === 'P2002'
+//   ) {
+//     return JSON.stringify(error.meta ?? {});
+//   }
+//   return null;
+// }
+
+// @Injectable()
+// export class IngestionRepository {
+//   constructor(private readonly prisma: PrismaService) {}
+
+//   // /**
+//   //  * Stores the event and updates its issue in one transaction.
+//   //  * Returns false if the eventId was already stored (idempotency):
+//   //  * the transaction rolls back, so the counter is not incremented.
+//   //  */
+//   // async store(data: StoreEventData): Promise<boolean> {
+//   //   for (let attempt = 0; attempt < 2; attempt++) {
+//   //     try {
+//   //       await this.storeOnce(data);
+//   //       return true;
+//   //     } catch (e) {
+//   //       const conflict = conflictInfo(e);
+//   //       if (conflict?.includes('eventId')) return false;
+//   //       // Two first events of the same error arrived together: retry once,
+//   //       // the issue exists now, so the upsert updates it.
+//   //       if (conflict?.includes('fingerprint') && attempt === 0) continue;
+//   //       throw e;
+//   //     }
+//   //   }
+//   //   throw new Error('Unreachable');
+//   // }
+
+//   /**
+//    * Stores the event and updates its issue in one transaction.
+//    * Returns null if the eventId was already stored (idempotency):
+//    * the transaction rolls back, so the counter is not incremented.
+//    */
+//   async store(data: StoreEventData): Promise<StoreResult | null> {
+//     for (let attempt = 0; attempt < 2; attempt++) {
+//       try {
+//         return await this.storeOnce(data);
+//       } catch (e) {
+//         const conflict = conflictInfo(e);
+//         if (conflict?.includes('eventId')) return null;
+//         // Two first events of the same error arrived together: retry once,
+//         // the issue exists now, so the upsert updates it.
+//         if (conflict?.includes('fingerprint') && attempt === 0) continue;
+//         throw e;
+//       }
+//     }
+//     throw new Error('Unreachable');
+//   }
+
+//   // private storeOnce(data: StoreEventData): Promise<void> {
+//   //   return this.prisma.$transaction(async (tx) => {
+//   //     const issue = await tx.issue.upsert({
+//   //       where: {
+//   //         projectId_fingerprint: {
+//   //           projectId: data.projectId,
+//   //           fingerprint: data.fingerprint,
+//   //         },
+//   //       },
+//   //       create: {
+//   //         projectId: data.projectId,
+//   //         fingerprint: data.fingerprint,
+//   //         fingerprintVersion: data.fingerprintVersion,
+//   //         title: data.title,
+//   //         type: data.type,
+//   //         level: data.level,
+//   //         eventCount: 1,
+//   //         firstSeenAt: data.timestamp,
+//   //         lastSeenAt: data.timestamp,
+//   //         firstRelease: data.release,
+//   //         lastRelease: data.release,
+//   //       },
+//   //       update: { eventCount: { increment: 1 } },
+//   //     });
+
+//   //     // eventCount 1 means the upsert just created the issue.
+//   //     if (issue.eventCount > 1) {
+//   //       if (data.timestamp > issue.lastSeenAt) {
+//   //         await tx.issue.updateMany({
+//   //           where: { id: issue.id, lastSeenAt: { lt: data.timestamp } },
+//   //           data: { lastSeenAt: data.timestamp, lastRelease: data.release },
+//   //         });
+//   //       }
+//   //       // Regression: a resolved issue that fails again is reopened.
+//   //       // An ignored issue stays ignored.
+//   //       if (issue.status === 'resolved') {
+//   //         await tx.issue.updateMany({
+//   //           where: { id: issue.id, status: 'resolved' },
+//   //           data: { status: 'unresolved', resolvedAt: null },
+//   //         });
+//   //       }
+//   //     }
+
+//   //     await tx.event.create({
+//   //       data: {
+//   //         eventId: data.eventId,
+//   //         projectId: data.projectId,
+//   //         issueId: issue.id,
+//   //         level: data.level,
+//   //         type: data.type,
+//   //         message: data.message,
+//   //         stack: data.stack,
+//   //         platform: data.platform,
+//   //         environment: data.environment,
+//   //         release: data.release,
+//   //         sdk: data.sdk,
+//   //         context: data.context,
+//   //         timestamp: data.timestamp,
+//   //       },
+//   //     });
+//   //   });
+//   // }
+
+//   private storeOnce(data: StoreEventData): Promise<StoreResult> {
+//     return this.prisma.$transaction(async (tx) => {
+//       const issue = await tx.issue.upsert({
+//         where: {
+//           projectId_fingerprint: {
+//             projectId: data.projectId,
+//             fingerprint: data.fingerprint,
+//           },
+//         },
+//         create: {
+//           projectId: data.projectId,
+//           fingerprint: data.fingerprint,
+//           fingerprintVersion: data.fingerprintVersion,
+//           title: data.title,
+//           type: data.type,
+//           level: data.level,
+//           eventCount: 1,
+//           firstSeenAt: data.timestamp,
+//           lastSeenAt: data.timestamp,
+//           firstRelease: data.release,
+//           lastRelease: data.release,
+//         },
+//         update: { eventCount: { increment: 1 } },
+//       });
+
+//       // eventCount 1 means the upsert just created the issue.
+//       const issueCreated = issue.eventCount === 1;
+
+//       if (!issueCreated) {
+//         if (data.timestamp > issue.lastSeenAt) {
+//           await tx.issue.updateMany({
+//             where: { id: issue.id, lastSeenAt: { lt: data.timestamp } },
+//             data: { lastSeenAt: data.timestamp, lastRelease: data.release },
+//           });
+//         }
+
+//         // Regression: a resolved issue that fails again is reopened.
+//         // An ignored issue stays ignored.
+//         if (issue.status === 'resolved') {
+//           await tx.issue.updateMany({
+//             where: { id: issue.id, status: 'resolved' },
+//             data: { status: 'unresolved', resolvedAt: null },
+//           });
+//         }
+//       }
+
+//       await tx.event.create({
+//         data: {
+//           eventId: data.eventId,
+//           projectId: data.projectId,
+//           issueId: issue.id,
+//           level: data.level,
+//           type: data.type,
+//           message: data.message,
+//           stack: data.stack,
+//           platform: data.platform,
+//           environment: data.environment,
+//           release: data.release,
+//           sdk: data.sdk,
+//           context: data.context,
+//           timestamp: data.timestamp,
+//         },
+//       });
+
+//       return { issueId: issue.id, issueCreated };
+//     });
+//   }
+// }
+
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
+
 export interface StoreResult {
   issueId: string;
   /** True when this event created the issue (first occurrence of the error). */
   issueCreated: boolean;
+  /** True when this event reopened a resolved issue (a regression). */
+  regressed: boolean;
 }
+
 export interface StoreEventData {
   projectId: string;
   fingerprint: string;
@@ -39,32 +259,11 @@ function conflictInfo(error: unknown): string | null {
 export class IngestionRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  // /**
-  //  * Stores the event and updates its issue in one transaction.
-  //  * Returns false if the eventId was already stored (idempotency):
-  //  * the transaction rolls back, so the counter is not incremented.
-  //  */
-  // async store(data: StoreEventData): Promise<boolean> {
-  //   for (let attempt = 0; attempt < 2; attempt++) {
-  //     try {
-  //       await this.storeOnce(data);
-  //       return true;
-  //     } catch (e) {
-  //       const conflict = conflictInfo(e);
-  //       if (conflict?.includes('eventId')) return false;
-  //       // Two first events of the same error arrived together: retry once,
-  //       // the issue exists now, so the upsert updates it.
-  //       if (conflict?.includes('fingerprint') && attempt === 0) continue;
-  //       throw e;
-  //     }
-  //   }
-  //   throw new Error('Unreachable');
-  // }
-
   /**
    * Stores the event and updates its issue in one transaction.
    * Returns null if the eventId was already stored (idempotency):
-   * the transaction rolls back, so the counter is not incremented.
+   * the transaction rolls back, so the counter is not incremented and
+   * a duplicate event can never reopen an issue.
    */
   async store(data: StoreEventData): Promise<StoreResult | null> {
     for (let attempt = 0; attempt < 2; attempt++) {
@@ -81,69 +280,6 @@ export class IngestionRepository {
     }
     throw new Error('Unreachable');
   }
-
-  // private storeOnce(data: StoreEventData): Promise<void> {
-  //   return this.prisma.$transaction(async (tx) => {
-  //     const issue = await tx.issue.upsert({
-  //       where: {
-  //         projectId_fingerprint: {
-  //           projectId: data.projectId,
-  //           fingerprint: data.fingerprint,
-  //         },
-  //       },
-  //       create: {
-  //         projectId: data.projectId,
-  //         fingerprint: data.fingerprint,
-  //         fingerprintVersion: data.fingerprintVersion,
-  //         title: data.title,
-  //         type: data.type,
-  //         level: data.level,
-  //         eventCount: 1,
-  //         firstSeenAt: data.timestamp,
-  //         lastSeenAt: data.timestamp,
-  //         firstRelease: data.release,
-  //         lastRelease: data.release,
-  //       },
-  //       update: { eventCount: { increment: 1 } },
-  //     });
-
-  //     // eventCount 1 means the upsert just created the issue.
-  //     if (issue.eventCount > 1) {
-  //       if (data.timestamp > issue.lastSeenAt) {
-  //         await tx.issue.updateMany({
-  //           where: { id: issue.id, lastSeenAt: { lt: data.timestamp } },
-  //           data: { lastSeenAt: data.timestamp, lastRelease: data.release },
-  //         });
-  //       }
-  //       // Regression: a resolved issue that fails again is reopened.
-  //       // An ignored issue stays ignored.
-  //       if (issue.status === 'resolved') {
-  //         await tx.issue.updateMany({
-  //           where: { id: issue.id, status: 'resolved' },
-  //           data: { status: 'unresolved', resolvedAt: null },
-  //         });
-  //       }
-  //     }
-
-  //     await tx.event.create({
-  //       data: {
-  //         eventId: data.eventId,
-  //         projectId: data.projectId,
-  //         issueId: issue.id,
-  //         level: data.level,
-  //         type: data.type,
-  //         message: data.message,
-  //         stack: data.stack,
-  //         platform: data.platform,
-  //         environment: data.environment,
-  //         release: data.release,
-  //         sdk: data.sdk,
-  //         context: data.context,
-  //         timestamp: data.timestamp,
-  //       },
-  //     });
-  //   });
-  // }
 
   private storeOnce(data: StoreEventData): Promise<StoreResult> {
     return this.prisma.$transaction(async (tx) => {
@@ -172,6 +308,7 @@ export class IngestionRepository {
 
       // eventCount 1 means the upsert just created the issue.
       const issueCreated = issue.eventCount === 1;
+      let regressed = false;
 
       if (!issueCreated) {
         if (data.timestamp > issue.lastSeenAt) {
@@ -182,12 +319,19 @@ export class IngestionRepository {
         }
 
         // Regression: a resolved issue that fails again is reopened.
-        // An ignored issue stays ignored.
+        // An ignored issue stays ignored. The status is in the `where`, so
+        // only one request can win the flip: count === 1 means "this event did it".
         if (issue.status === 'resolved') {
-          await tx.issue.updateMany({
+          const { count } = await tx.issue.updateMany({
             where: { id: issue.id, status: 'resolved' },
-            data: { status: 'unresolved', resolvedAt: null },
+            data: {
+              status: 'unresolved',
+              resolvedAt: null,
+              regressionCount: { increment: 1 },
+              lastRegressionAt: new Date(),
+            },
           });
+          regressed = count === 1;
         }
       }
 
@@ -209,7 +353,7 @@ export class IngestionRepository {
         },
       });
 
-      return { issueId: issue.id, issueCreated };
+      return { issueId: issue.id, issueCreated, regressed };
     });
   }
 }
