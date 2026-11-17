@@ -18,7 +18,7 @@ const MAX_PAGES = 5;
 
 interface RequestOptions {
   token: string;
-  method?: 'GET' | 'POST';
+  method?: 'GET' | 'POST' | 'PATCH';
   body?: unknown;
 }
 
@@ -125,6 +125,33 @@ export class GithubApiClient {
       { token, method: 'POST', body: input },
     );
     return { number: data.number, url: data.html_url };
+  }
+
+  async reopenIssue(
+    installationId: string,
+    repo: string,
+    number: number,
+  ): Promise<void> {
+    const token = await this.getInstallationToken(installationId);
+    await this.json(`/repos/${repo}/issues/${number}`, {
+      token,
+      method: 'PATCH',
+      body: { state: 'open', state_reason: 'reopened' },
+    });
+  }
+
+  async commentOnIssue(
+    installationId: string,
+    repo: string,
+    number: number,
+    body: string,
+  ): Promise<void> {
+    const token = await this.getInstallationToken(installationId);
+    await this.json(`/repos/${repo}/issues/${number}/comments`, {
+      token,
+      method: 'POST',
+      body: { body },
+    });
   }
 
   /** Short-lived installation token (about 1 hour), cached in memory. */
