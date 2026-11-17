@@ -58,7 +58,7 @@ export class IngestionService {
     // return { accepted, duplicates };
     let accepted = 0;
     let duplicates = 0;
-    const newIssues: NewIssueAlert[] = [];
+    //const newIssues: NewIssueAlert[] = [];
 
     // for (const event of events) {
     //   const result = await this.repo.store(
@@ -67,6 +67,31 @@ export class IngestionService {
     //   if (result) accepted += 1;
     //   else duplicates += 1;
     // }
+    // for (const event of events) {
+    //   const result = await this.repo.store(
+    //     this.toRecord(apiKey.projectId, event, now),
+    //   );
+    //   if (!result) {
+    //     duplicates += 1;
+    //     continue;
+    //   }
+    //   accepted += 1;
+    //   if (result.issueCreated) {
+    //     newIssues.push({
+    //       projectId: apiKey.projectId, // from the API key, never the body
+    //       issueId: result.issueId,
+    //       environment: event.environment,
+    //     });
+    //   }
+    // }
+    // // After every transaction is committed. We await it on purpose: on serverless
+    // // the function can be frozen once the response is sent. It only costs time
+    // // when a batch created a new issue, and it never throws.
+    // await this.alerts.dispatch(newIssues);
+    // return { accepted, duplicates };
+    const newIssues: NewIssueAlert[] = [];
+    const regressions: NewIssueAlert[] = [];
+
     for (const event of events) {
       const result = await this.repo.store(
         this.toRecord(apiKey.projectId, event, now),
@@ -76,18 +101,19 @@ export class IngestionService {
         continue;
       }
       accepted += 1;
-      if (result.issueCreated) {
-        newIssues.push({
-          projectId: apiKey.projectId, // from the API key, never the body
-          issueId: result.issueId,
-          environment: event.environment,
-        });
-      }
+
+      const alert: NewIssueAlert = {
+        projectId: apiKey.projectId, // from the API key, never the body
+        issueId: result.issueId,
+        environment: event.environment,
+      };
+      if (result.issueCreated) newIssues.push(alert);
+      if (result.regressed) regressions.push(alert);
     }
+
     // After every transaction is committed. We await it on purpose: on serverless
-    // the function can be frozen once the response is sent. It only costs time
-    // when a batch created a new issue, and it never throws.
-    await this.alerts.dispatch(newIssues);
+    // the function can be frozen once the response is sent. It never throws.
+    await this.alerts.dispatch({ created: newIssues, regressed: regressions });
     return { accepted, duplicates };
   }
 
