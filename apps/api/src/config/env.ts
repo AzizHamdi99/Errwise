@@ -32,6 +32,7 @@ export const envSchema = z.object({
   GITHUB_APP_CLIENT_SECRET: z.string().min(1),
   GITHUB_APP_PRIVATE_KEY_BASE64: z.string().min(32),
   GITHUB_STATE_SECRET: z.string().min(32),
+  GITHUB_WEBHOOK_SECRET: z.string().min(16),
 });
 
 export type Env = z.infer<typeof envSchema>;
