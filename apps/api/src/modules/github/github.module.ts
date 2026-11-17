@@ -9,6 +9,8 @@ import { GithubController } from './github.controller';
 import { GithubRepository } from './github.repository';
 import { GithubIssuesController } from './github-issues.controller';
 import { GithubIssueService } from './github-issue.service';
+import { GithubWebhookController } from './github-webhook.controller';
+import { GithubWebhookService } from './github-webhook.service';
 
 @Module({
   // No default secret: each call passes its own key (app key or state secret).
@@ -17,6 +19,7 @@ import { GithubIssueService } from './github-issue.service';
     GithubController,
     GithubInstallationController,
     GithubIssuesController,
+    GithubWebhookController,
   ],
   providers: [
     GithubApiClient,
@@ -24,6 +27,7 @@ import { GithubIssueService } from './github-issue.service';
     GithubRepository,
     GithubIntegrationService,
     GithubIssueService,
+    GithubWebhookService,
   ],
   // Step 4 (creating the GitHub issue) will reuse these.
   exports: [GithubApiClient, GithubRepository],
