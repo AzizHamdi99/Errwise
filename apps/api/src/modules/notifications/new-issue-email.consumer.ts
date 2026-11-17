@@ -30,7 +30,8 @@ import type { Message } from '@errwise/shared';
 import type { Env } from '../../config/env';
 import { QueueConsumer } from '../messaging/queue-consumer';
 import { NewIssueNotifier } from './new-issue-notifier';
-import { RegressionNotifier } from './regression-notifier';
+//import { RegressionNotifier } from './regression-notifier';
+import { RegressionHandler } from './regression-handler';
 
 /** Consumes every message of the notifications.email queue. */
 @Injectable()
@@ -40,7 +41,8 @@ export class NewIssueEmailConsumer extends QueueConsumer {
   constructor(
     config: ConfigService<Env, true>,
     private readonly newIssues: NewIssueNotifier,
-    private readonly regressions: RegressionNotifier,
+    //private readonly regressions: RegressionNotifier,
+    private readonly regressions: RegressionHandler,
   ) {
     super(config);
   }
@@ -53,7 +55,7 @@ export class NewIssueEmailConsumer extends QueueConsumer {
           message.data.environment,
         );
       case ISSUE_REGRESSED:
-        return this.regressions.notify(
+        return this.regressions.handle(
           message.data.issueId,
           message.data.environment,
         );
