@@ -113,4 +113,53 @@ export class GithubRepository {
       data: { githubIssueClaimedAt: null },
     });
   }
+
+  /**
+   * Syncs the GitHub state onto every Errwise issue linked to this GitHub issue.
+   * closed   -> unresolved issues become resolved (resolvedAt = now)
+   * reopened -> resolved issues become unresolved (resolvedAt = null)
+   * Ignored issues keep their status, but githubState is always updated.
+   */
+  async applyGithubIssueState(
+    ref: { repo: string; installationId: string; number: number },
+    state: 'open' | 'closed',
+  ): Promise<void> {
+    const where = {
+      githubIssueNumber: ref.number,
+      project: {
+        githubRepo: { equals: ref.repo, mode: 'insensitive' as const },
+        githubInstallationId: ref.installationId,
+        deletedAt: null,
+      },
+    };
+
+    if (state === 'closed') {
+      await this.prisma.$transaction([
+        this.prisma.issue.updateMany({
+          where: { ...where, status: 'unresolved' },
+          data: {
+            status: 'resolved',
+            resolvedAt: new Date(),
+            githubState: 'closed',
+          },
+        }),
+        this.prisma.issue.updateMany({
+          where: { ...where, status: { not: 'unresolved' } },
+          data: { githubState: 'closed' },
+        }),
+      ]);
+      return;
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.issue.updateMany({
+        where: { ...where, status: 'resolved' },
+        data: { status: 'unresolved', resolvedAt: null, githubState: 'open' },
+      }),
+      this.prisma.issue.updateMany({
+        where: { ...where, status: { not: 'resolved' } },
+        data: { githubState: 'open' },
+      }),
+    ]);
+  }
 }
