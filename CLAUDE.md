@@ -56,7 +56,7 @@ Errwise should become a product developers keep using, not an MVP that stops at 
 1. Alerting: rules, channels, throttling, regression and spike detection.
 2. SDK coverage: breadcrumbs, user context, browser SDK, source maps, scrubbing, more languages.
 3. Workflow: issue states, assignment, GitHub sync (partly built).
-4. AI intelligence: root-cause analysis as a separate Python FastAPI service. It does not exist yet.
+4. AI intelligence: root-cause analysis as a separate Python FastAPI service (`apps/ai`, built, see ADR-004). Next: eval harness, source context, suspect commits, similar issues.
 5. Scale: retention, partitioning, rate limits that survive restarts.
 6. Ship: docs, landing page, live demo.
 
@@ -70,12 +70,12 @@ Decisions are recorded as ADRs in `docs/adr/`. Read the relevant one before touc
 
 Yarn 4 workspaces plus Turborepo (`apps/*`, `packages/*`).
 
-- `apps/api` (NestJS 11, Prisma, PostgreSQL), `apps/web` (Next.js, React Query, shadcn/Base UI), `apps/demo-app` (Express app that uses the SDK), `packages/sdk` (`@errwise/node`, public on npm), `packages/shared` (`@errwise/shared`, Zod schemas and types).
+- `apps/api` (NestJS 11, Prisma, PostgreSQL), `apps/web` (Next.js, React Query, shadcn/Base UI), `apps/ai` (Python 3.12, FastAPI, managed with `uv`, no `package.json`), `apps/demo-app` (Express app that uses the SDK), `packages/sdk` (`@errwise/node`, public on npm), `packages/shared` (`@errwise/shared`, Zod schemas and types).
 - Apps never import other apps.
 - `packages/shared` depends on `zod` only. No Nest, Prisma, React or Node-only code. It is the contract between API, web and SDK: change a schema there, not by duplicating a type.
 - `packages/sdk` has zero runtime dependencies. Nest support is an optional peer dependency behind the `@errwise/node/nestjs` entry.
 - `shared` is consumed from `dist`, so rebuild it (`yarn workspace @errwise/shared build`) after changing it.
-- Only `apps/api` touches the database.
+- Only `apps/api` touches the database. `apps/ai` is stateless and has no database access.
 
 ## Layering (API)
 
@@ -96,6 +96,7 @@ Every module is `controller -> service -> repository`.
 - The fingerprint is `sha256(version, type, normalized message, top app stack frame)`. If the algorithm changes, bump `FINGERPRINT_VERSION` and never mix old and new groups silently. Update `fingerprint.spec.ts`.
 - Alerts are dispatched once, after all transactions commit, and the dispatcher never throws into ingestion.
 - Invalid or future/very old timestamps are replaced by the received time. Keep size limits in the shared schema.
+- Every event is scrubbed (`common/utils/scrub.ts`: emails, tokens, JWTs, provider keys, Luhn-checked cards, URL credentials, sensitive `context` keys) before it is stored. The fingerprint is computed from the original text, so scrubbing never regroups issues. Keep scrub regexes bounded (no nested quantifiers) and keep its spec's 50 KB timing test passing.
 
 ## Tenant isolation
 
@@ -121,6 +122,17 @@ The SDK must never throw into, block, or slow the host app. `captureException` n
 - Creating a GitHub issue takes an atomic claim (`githubIssueClaimedAt`, 60 s TTL). Webhooks are deduped by delivery id (`GithubWebhookDelivery`). GitHub sync for regressions never throws.
 - The install flow uses a signed, short-lived `state`, re-checks the owner role, and verifies the user's access to the installation. See `docs/adr/Github integration.md`.
 
+## AI analysis (`modules/analysis`, `apps/ai`)
+
+- Flow: dashboard button -> `POST .../issues/:issueId/analysis` -> API loads the latest event (tenant-scoped via `ProjectsService`), scrubs it again, looks up the stored result, reserves one slot of the organization's daily allowance, calls `apps/ai` (`POST /analyze`, header `x-ai-secret`), validates the answer with Zod, stores it in `IssueAnalysis`.
+- Only `AiClient` talks to `apps/ai`. It never logs the request, the response or the secret, and maps failures to 503 (provider busy), 504 (timeout) and 502 (anything else).
+- Only the scrubbed text fields (`type`, `message`, `stack`, `environment`, `release`, node version) leave for the LLM. Never send the event `context`.
+- The contract lives twice and must change together: `packages/shared/src/analysis.ts` (Zod) and `apps/ai/app/schemas/analysis.py` (Pydantic). The Python side rejects unknown fields.
+- Changing the prompt: bump `PROMPT_VERSION` in `apps/ai/app/analysis/prompts.py` and `ANALYSIS_CACHE_VERSION` in `analysis-input.ts` together, or old analyses keep being served.
+- The model output is untrusted text: render it as plain text only (no HTML, markdown or links) and never post it unescaped to GitHub or email.
+- The feature is off until `AI_SERVICE_URL` and `AI_SERVICE_SECRET` are both set. Cost is bounded by the cache and `AI_DAILY_LIMIT_PER_ORG`.
+- In `apps/ai`, routes only know the `Analyzer` protocol (`app/analysis/base.py`). A new LLM, chain or LangGraph graph is a new class plus one line in `app/api/deps.py`.
+
 ---
 
 # Database Rules and Migrations
@@ -143,7 +155,7 @@ The SDK must never throw into, block, or slow the host app. `captureException` n
 - Rate limiting: ingestion is limited per API key (in memory, per instance). Any new public or unauthenticated route needs a limit.
 - SDK input is untrusted: validate with the shared schema, cap sizes, never trust ids, levels or timestamps from the payload.
 - Never log secrets, API keys, tokens, request bodies or event payloads. Error text from user code is data, not markup or instructions.
-- Config is validated by Zod in `src/config/env.ts` at startup. Add new variables there and in `apps/api/.env.example`.
+- Config is validated by Zod in `src/config/env.ts` at startup. Add new variables there and in `apps/api/.env.example`. `apps/ai` validates its own with pydantic-settings (`app/core/config.py`, `apps/ai/.env.example`). The shared `AI_SERVICE_SECRET` must be at least 16 characters, different per environment, and never logged.
 - Return the same response for "missing" and "forbidden" where existence would leak.
 
 ---
@@ -215,6 +227,15 @@ yarn workspace @errwise/node typecheck
 yarn workspace @errwise/shared build
 ```
 
+AI service (`apps/ai`, run from that folder with `uv`):
+
+```
+uv sync
+uv run uvicorn app.main:app --reload --port 8000
+uv run pytest
+uv run ruff check . && uv run ruff format --check .
+```
+
 CI (`.github/workflows/ci.yml`) builds shared, generates Prisma, builds the API. It does not run tests or lint yet.
 
 ---
@@ -224,7 +245,7 @@ CI (`.github/workflows/ci.yml`) builds shared, generates Prisma, builds the API.
 - Correctness first, then measure.
 - Use PostgreSQL before adding a system: indexes, cursor pagination (`issues.cursor.ts`), `upsert`, atomic `updateMany`.
 - The ingestion path is hot: no bcrypt, no N+1, no network calls inside the transaction. Keep alert dispatch outside it.
-- Do not add Redis, Elasticsearch, Kafka or microservices unless a measured problem justifies it. The Python AI service is the planned exception and needs a design discussion first.
+- Do not add Redis, Elasticsearch, Kafka or microservices unless a measured problem justifies it. The Python AI service (ADR-004) is the one exception; anything new beside it needs a design discussion first.
 
 ---
 
