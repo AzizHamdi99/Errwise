@@ -34,6 +34,7 @@ model Organization {
   deletedAt   DateTime?    @db.Timestamptz(3)
   members     Membership[]
   projects    Project[]
+  aiUsage     AiUsage[]
 }
 
 model Membership {
@@ -150,6 +151,7 @@ model Issue {
   lastRegressionNotifiedAt DateTime? @db.Timestamptz(3)
   project            Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
   events             Event[]
+  analyses           IssueAnalysis[]
 
   @@unique([projectId, githubIssueNumber])
   @@unique([projectId, fingerprint])
@@ -190,4 +192,30 @@ model ProjectSubscription {
 
   @@id([userId, projectId])
   @@index([projectId])
+}
+
+/// One AI analysis per issue and input. The key is a hash of the scrubbed input, so the same
+/// error never costs a second AI call, and a changed stack gets a fresh analysis.
+model IssueAnalysis {
+  id            String   @id @default(uuid(7)) @db.Uuid
+  issueId       String   @db.Uuid
+  inputHash     String
+  promptVersion String
+  model         String
+  result        Json
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+  issue         Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@unique([issueId, inputHash])
+}
+
+/// AI calls made by an organization on one UTC day. The daily cap is enforced with an
+/// atomic `updateMany ... where requests < cap`, so parallel requests cannot exceed it.
+model AiUsage {
+  organizationId String       @db.Uuid
+  day            DateTime     @db.Date
+  requests       Int          @default(0)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@id([organizationId, day])
 }

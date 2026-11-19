@@ -21,6 +21,7 @@ import { IngestionModule } from './modules/ingestion/ingestion.module';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 import { MessagingModule } from './modules/messaging/messaging.module';
 import { GithubModule } from './modules/github/github.module';
+import { AnalysisModule } from './modules/analysis/analysis.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { GithubModule } from './modules/github/github.module';
     SubscriptionsModule,
     MessagingModule,
     GithubModule,
+    AnalysisModule,
   ],
   controllers: [AppController],
   providers: [
