@@ -8,6 +8,7 @@ import {
   computeFingerprint,
 } from './fingerprint';
 import { IngestionRepository, StoreEventData } from './ingestion.repository';
+import { scrubEvent } from '../../common/utils/scrub';
 
 import {
   IssueAlertDispatcher,
@@ -122,26 +123,33 @@ export class IngestionService {
     event: EventInput,
     now: Date,
   ): StoreEventData {
-    const type = event.type ?? 'Error';
+    const rawType = event.type ?? 'Error';
+    // The fingerprint is a one-way hash, so it is computed from the original
+    // values: scrubbing must never change how errors are grouped.
+    const fingerprint = computeFingerprint({
+      type: rawType,
+      message: event.message,
+      stack: event.stack,
+    });
+
+    // Everything stored or shown (title, emails, GitHub issues) is scrubbed.
+    const clean = scrubEvent({ ...event, type: rawType }).event;
+    const type = clean.type ?? 'Error';
     return {
       projectId, // always from the API key, never from the body
-      fingerprint: computeFingerprint({
-        type,
-        message: event.message,
-        stack: event.stack,
-      }),
+      fingerprint,
       fingerprintVersion: FINGERPRINT_VERSION,
-      title: buildTitle(type, event.message),
+      title: buildTitle(type, clean.message),
       eventId: event.eventId,
       level: event.level,
       type,
-      message: event.message,
-      stack: event.stack,
+      message: clean.message,
+      stack: clean.stack,
       platform: event.platform,
       environment: event.environment,
       release: event.release,
       sdk: event.sdk,
-      context: event.context as Prisma.InputJsonObject | undefined,
+      context: clean.context as Prisma.InputJsonObject | undefined,
       timestamp: resolveTimestamp(event.timestamp, now),
     };
   }
