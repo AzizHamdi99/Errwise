@@ -33,6 +33,16 @@ export const envSchema = z.object({
   GITHUB_APP_PRIVATE_KEY_BASE64: z.string().min(32),
   GITHUB_STATE_SECRET: z.string().min(32),
   GITHUB_WEBHOOK_SECRET: z.string().min(16),
+  // AI analysis is off until both are set, so the API can ship before the AI service does.
+  AI_SERVICE_URL: z.string().url().optional(),
+  AI_SERVICE_SECRET: z.string().min(16).optional(),
+  AI_SERVICE_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .min(1_000)
+    .max(120_000)
+    .default(45_000),
+  AI_DAILY_LIMIT_PER_ORG: z.coerce.number().int().positive().default(20),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -54,6 +64,11 @@ export function validateEnv(raw: Record<string, unknown>): Env {
   ) {
     throw new Error(
       'SMTP_HOST, SMTP_USER and SMTP_PASS are required when MAIL_DRIVER=smtp',
+    );
+  }
+  if (!parsed.data.AI_SERVICE_URL !== !parsed.data.AI_SERVICE_SECRET) {
+    throw new Error(
+      'AI_SERVICE_URL and AI_SERVICE_SECRET must be set together, or both left out',
     );
   }
   if (parsed.data.ALERT_DELIVERY === 'queue' && !parsed.data.RABBITMQ_URL) {
