@@ -143,3 +143,33 @@ export interface IssueStats {
   environments: EnvironmentCount[];
   releases: ReleaseCount[];
 }
+
+/** Deploys are rarer than errors, so the releases page looks further back by default. */
+export const DEFAULT_RELEASES_RANGE: StatsRange = "30d";
+
+export const releasesQuerySchema = z.object({
+  range: statsRangeSchema.default(DEFAULT_RELEASES_RANGE),
+});
+
+export type ReleasesQuery = z.infer<typeof releasesQuerySchema>;
+
+export interface ReleaseStat {
+  /** Null groups the events that were sent without a release. */
+  release: string | null;
+  /** Events of this release received in the range. */
+  events: number;
+  /** Issues first seen in the range whose first release is this one. */
+  newIssues: number;
+  /** First and last event of this release inside the range, ISO 8601 UTC. */
+  firstSeenAt: string;
+  lastSeenAt: string;
+}
+
+export interface ReleasesOverview {
+  range: StatsRange;
+  /** Start (inclusive) and end (exclusive) of the range, ISO 8601 UTC. */
+  from: string;
+  to: string;
+  /** Most recently seen first, at most 20. */
+  releases: ReleaseStat[];
+}
