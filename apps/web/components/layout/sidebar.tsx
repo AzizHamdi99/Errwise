@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Bell,
   FolderKanban,
   Gauge,
   LayoutDashboard,
@@ -21,6 +22,7 @@ const NAV = [
   { label: "Overview", segment: "", icon: LayoutDashboard },
   { label: "Projects", segment: "projects", icon: FolderKanban },
   { label: "Usage", segment: "usage", icon: Gauge },
+  { label: "Alerts", segment: "alerts", icon: Bell },
   { label: "Members", segment: "members", icon: Users },
   { label: "Settings", segment: "settings", icon: Settings },
 ] as const;
