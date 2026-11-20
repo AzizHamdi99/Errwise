@@ -1,12 +1,18 @@
 import { describe, expect, it } from "vitest";
 import type { ResolvedConfig } from "../src/config";
-import { LIMITS, buildEvent, normalizeError } from "../src/event";
+import {
+  LIMITS,
+  buildEvent,
+  enforceLimits,
+  normalizeError,
+} from "../src/event";
 
 const config: ResolvedConfig = {
   apiKey: `ew_live_${"a".repeat(32)}`,
   eventsUrl: "http://localhost:4000/v1/events",
   environment: "production",
   release: "1.0.0",
+  commit: undefined,
   enabled: true,
   debug: false,
   beforeSend: undefined,
@@ -74,6 +80,20 @@ describe("buildEvent", () => {
       nodeVersion: process.version,
       os: process.platform,
     });
+  });
+
+  it("sends the deployed commit when there is one", () => {
+    const withCommit = { ...config, commit: "abcdef1234567" };
+    expect(buildEvent(new Error("x"), withCommit).commitSha).toBe(
+      "abcdef1234567",
+    );
+    expect(buildEvent(new Error("x"), config).commitSha).toBeUndefined();
+  });
+
+  it("drops a commit that beforeSend replaced with garbage", () => {
+    const event = buildEvent(new Error("x"), { ...config, commit: "abcdef1" });
+    const edited = enforceLimits({ ...event, commitSha: "not a sha" });
+    expect(edited.commitSha).toBeUndefined();
   });
 
   it("generates a different eventId every time", () => {
