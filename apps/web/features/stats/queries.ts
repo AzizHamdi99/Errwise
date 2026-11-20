@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import type { ProjectOverview, StatsRange } from "@errwise/shared";
+import type { OrgOverview, ProjectOverview, StatsRange } from "@errwise/shared";
 import { api } from "@/lib/api";
 
 export const statsRoot = (projectId: string) =>
@@ -20,6 +20,20 @@ export function useProjectOverview(
     // Counts move slowly, so a minute-old answer is fine and tab switches stay instant.
     staleTime: 60_000,
     // Changing the range keeps the old charts on screen instead of flashing a skeleton.
+    placeholderData: keepPreviousData,
+  });
+}
+
+export const orgStatsRoot = (orgId: string) =>
+  ["organizations", orgId, "stats"] as const;
+
+export function useOrgOverview(orgId: string, range: StatsRange) {
+  return useQuery({
+    queryKey: [...orgStatsRoot(orgId), "overview", range] as const,
+    queryFn: () =>
+      api<OrgOverview>(`/organizations/${orgId}/stats/overview?range=${range}`),
+    enabled: !!orgId,
+    staleTime: 60_000,
     placeholderData: keepPreviousData,
   });
 }

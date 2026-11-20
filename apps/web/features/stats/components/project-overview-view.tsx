@@ -13,34 +13,10 @@ import { useProjectOverview } from "../queries";
 import { useStatsRange } from "../use-stats-range";
 import { EnvironmentDonut } from "./environment-donut";
 import { ErrorsOverTimeChart } from "./errors-over-time-chart";
-import { RangeSelect, rangeLabel } from "./range-select";
-import { StatCard } from "./stat-card";
+import { Panel } from "./panel";
+import { RangeSelect } from "./range-select";
+import { SummaryCards } from "./summary-cards";
 import { TopIssuesTable } from "./top-issues-table";
-
-function Panel({
-  title,
-  description,
-  children,
-  flush,
-}: {
-  title: string;
-  description?: string;
-  children: React.ReactNode;
-  /** No padding around the body, for lists that go edge to edge. */
-  flush?: boolean;
-}) {
-  return (
-    <section aria-label={title} className="rounded-xl border bg-card">
-      <header className="border-b px-4 py-3">
-        <h2 className="text-sm font-medium">{title}</h2>
-        {description ? (
-          <p className="text-xs text-muted-foreground">{description}</p>
-        ) : null}
-      </header>
-      <div className={flush ? undefined : "p-4"}>{children}</div>
-    </section>
-  );
-}
 
 export function ProjectOverviewView() {
   const { org, project } = useCurrentProject();
@@ -52,7 +28,6 @@ export function ProjectOverviewView() {
   const base = `/organizations/${org.id}/projects/${project.id}`;
   const issueHref = (issue: TopIssue) => `${base}/issues/${issue.id}`;
   const data = query.data;
-  const hint = `last ${rangeLabel(range).toLowerCase()}`;
 
   let body: React.ReactNode;
   if (query.isError && !data) {
@@ -129,39 +104,7 @@ export function ProjectOverviewView() {
         actions={<RangeSelect value={range} onChange={setRange} />}
       />
 
-      <section
-        aria-label="Summary"
-        className="grid grid-cols-2 gap-4 lg:grid-cols-4"
-      >
-        <StatCard
-          label="Events"
-          value={data?.cards.events}
-          hint={hint}
-          delta={
-            data
-              ? {
-                  current: data.cards.events,
-                  previous: data.cards.eventsPrevious,
-                }
-              : undefined
-          }
-        />
-        <StatCard
-          label="Unresolved issues"
-          value={data?.cards.unresolved}
-          hint="right now"
-        />
-        <StatCard
-          label="New issues"
-          value={data?.cards.newIssues}
-          hint={hint}
-        />
-        <StatCard
-          label="Regressed issues"
-          value={data?.cards.regressedIssues}
-          hint={`${hint}, approx.`}
-        />
-      </section>
+      <SummaryCards cards={data?.cards} range={range} />
 
       {body}
     </div>

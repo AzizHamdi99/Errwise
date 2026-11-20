@@ -3,12 +3,15 @@ import type { TopIssue } from "@errwise/shared";
 import { RelativeTime } from "@/components/shared/relative-time";
 import { IssueStatusBadge } from "@/features/issues/components/issue-status-badge";
 
-interface Props {
-  issues: TopIssue[];
-  hrefFor: (issue: TopIssue) => string;
+/** The organization overview adds the project the issue belongs to. */
+type Row = TopIssue & { projectName?: string };
+
+interface Props<T extends Row> {
+  issues: T[];
+  hrefFor: (issue: T) => string;
 }
 
-export function TopIssuesTable({ issues, hrefFor }: Props) {
+export function TopIssuesTable<T extends Row>({ issues, hrefFor }: Props<T>) {
   const max = Math.max(1, ...issues.map((issue) => issue.count));
 
   return (
@@ -21,6 +24,11 @@ export function TopIssuesTable({ issues, hrefFor }: Props) {
           >
             <div className="min-w-0 flex-1 space-y-1.5">
               <p className="truncate text-sm font-medium">{issue.title}</p>
+              {issue.projectName ? (
+                <p className="truncate text-xs text-muted-foreground">
+                  {issue.projectName}
+                </p>
+              ) : null}
               {/* The bar is relative to the busiest issue, so the list reads as a ranking. */}
               <div
                 className="h-1 rounded-full bg-muted"

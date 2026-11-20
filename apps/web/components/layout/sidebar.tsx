@@ -1,6 +1,6 @@
 "use client";
 
-import { FolderKanban, Settings, Users } from "lucide-react";
+import { FolderKanban, LayoutDashboard, Settings, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Brand } from "@/components/shared/brand";
@@ -12,6 +12,7 @@ import { PendingCountBadge } from "@/features/invitations/components/pending-cou
 import { ThemeToggle } from "../shared/theme-toggle";
 
 const NAV = [
+  { label: "Overview", segment: "", icon: LayoutDashboard },
   { label: "Projects", segment: "projects", icon: FolderKanban },
   { label: "Members", segment: "members", icon: Users },
   { label: "Settings", segment: "settings", icon: Settings },
@@ -38,11 +39,15 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       {org ? (
         <nav aria-label="Main" className="space-y-1">
           {NAV.map(({ label, segment, icon: Icon }) => {
-            const href = `/organizations/${org.id}/${segment}`;
-            const active = pathname.startsWith(href);
+            const orgHref = `/organizations/${org.id}`;
+            const href = segment ? `${orgHref}/${segment}` : orgHref;
+            // Every org page lives under the overview's path, so it only matches exactly.
+            const active = segment
+              ? pathname.startsWith(href)
+              : pathname === href;
             return (
               <Link
-                key={segment}
+                key={label}
                 href={href}
                 onClick={onNavigate}
                 aria-current={active ? "page" : undefined}

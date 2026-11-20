@@ -1,7 +1,13 @@
-import React from "react";
+import type { Metadata } from "next";
+import { Suspense } from "react";
+import { OrgOverviewView } from "@/features/stats/components/org-overview-view";
 
-const page = () => {
-  return <div></div>;
-};
+export const metadata: Metadata = { title: "Overview" };
 
-export default page;
+export default function OrgOverviewPage() {
+  return (
+    <Suspense>
+      <OrgOverviewView />
+    </Suspense>
+  );
+}
