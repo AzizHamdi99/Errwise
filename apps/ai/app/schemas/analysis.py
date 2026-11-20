@@ -7,6 +7,23 @@ from app.schemas.common import CamelModel
 # Same limits as eventSchema in packages/shared/src/events.ts.
 MAX_MESSAGE = 5_000
 MAX_STACK = 50_000
+# Same limits as analyzeRequestSchema in packages/shared/src/analysis.ts.
+MAX_SNIPPETS = 5
+MAX_SNIPPET_CODE = 2_000
+
+
+class SourceSnippet(CamelModel):
+    """The lines around one failing frame, read from the project's repository.
+
+    `code` is already formatted by the API: one source line per line, each prefixed with its
+    number, the failing line marked with ">". The service embeds it as it is.
+    """
+
+    model_config = CamelModel.model_config | ConfigDict(extra="forbid")
+
+    file: str = Field(min_length=1, max_length=500)
+    line: int = Field(ge=1)
+    code: str = Field(min_length=1, max_length=MAX_SNIPPET_CODE)
 
 
 class AnalyzeRequest(CamelModel):
@@ -21,6 +38,8 @@ class AnalyzeRequest(CamelModel):
     environment: str = Field(min_length=1, max_length=64)
     release: str | None = Field(default=None, max_length=128)
     runtime: str | None = Field(default=None, max_length=64)  # e.g. "node 22"
+    # Only sent when the project opted in to showing its source code.
+    source_context: list[SourceSnippet] | None = Field(default=None, max_length=MAX_SNIPPETS)
 
 
 class AnalysisOutput(CamelModel):
