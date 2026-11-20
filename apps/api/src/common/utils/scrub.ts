@@ -139,3 +139,8 @@ export function scrubEvent<T extends ScrubbableEvent>(
   };
   return { event: scrubbed, redactions: scrubber.redactions };
 }
+
+/** Scrubs one piece of free text, such as a snippet of source code. */
+export function scrubText(text: string): string {
+  return new Scrubber().string(text);
+}

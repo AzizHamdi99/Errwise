@@ -8,6 +8,7 @@ import type { Event, Issue, IssueAnalysis } from '@prisma/client';
 import type { AnalysisResult, AnalyzeRequest } from '@errwise/shared';
 import type { Env } from '../../config/env';
 import type { ProjectsService } from '../projects/projects.service';
+import type { SourceContextService } from '../source-context/source-context.service';
 import type { AiClient } from './ai.client';
 import { AnalysisRepository } from './analysis.repository';
 import { AnalysisService } from './analysis.service';
@@ -62,14 +63,21 @@ function setup(limit = 20) {
       .fn<Promise<AnalysisResult>, [AnalyzeRequest]>()
       .mockResolvedValue(RESULT),
   };
+  // Off by default: the project has not opted in to sharing its source code.
+  const sourceContext = {
+    get: jest
+      .fn()
+      .mockResolvedValue({ status: 'disabled', commitSha: null, frames: [] }),
+  };
   const config = { get: () => limit };
   const service = new AnalysisService(
     config as unknown as ConfigService<Env, true>,
     repo as unknown as AnalysisRepository,
     projects as unknown as ProjectsService,
     ai as unknown as AiClient,
+    sourceContext as unknown as SourceContextService,
   );
-  return { service, repo, projects, ai };
+  return { service, repo, projects, ai, sourceContext };
 }
 
 describe('AnalysisService.analyze', () => {

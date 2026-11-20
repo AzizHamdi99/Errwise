@@ -9,5 +9,6 @@ import { SourceContextService } from './source-context.service';
   imports: [MembershipsModule, GithubModule],
   controllers: [SourceContextController],
   providers: [SourceContextService, SourceContextRepository],
+  exports: [SourceContextService],
 })
 export class SourceContextModule {}
