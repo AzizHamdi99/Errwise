@@ -242,6 +242,7 @@ export function IssueDetailView() {
               orgId={orgId}
               projectId={projectId}
               issueId={issue.id}
+              includesCode={project.sourceContextEnabled}
             />
             <StackTraceWithSource
               key={selected.id}

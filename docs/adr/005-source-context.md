@@ -41,8 +41,14 @@ The code belongs to the customer, so the design is driven by consent and by not 
   match or a compiled output path (`dist/`, `build/`) answers "no code" instead of wrong code.
 
 **The AI analysis may receive the snippets, only when the toggle is on.**
-- They are scrubbed like the error text, treated as untrusted data in the prompt, limited in
-  number and size, and part of the analysis cache key. This is stated next to the toggle.
+- They are scrubbed like the error text, treated as untrusted data in the prompt (their own
+  `<source_code>` block, with both blocks' closing tags neutralized), limited to five snippets of
+  2,000 characters, and part of the analysis cache key. This is stated next to the toggle and on
+  the analysis card. Reading the code is best effort: if it fails, the error is analyzed without
+  it. Which files were read is stored with the analysis (`sourceFiles`) and shown to the user.
+- Prompt v3 asks the model to cite the file and line it relies on, and counts code that states
+  the cause outright as grounds for high confidence. Checked with repeated real calls: the same
+  error was rated medium or low without code and high with it.
 
 ## Consequences
 
