@@ -223,6 +223,14 @@ export class StatsRepository {
     });
   }
 
+  /** AI analyses an organization started on one UTC day. No row yet means none. */
+  async aiRequestsOn(organizationId: string, day: Date): Promise<number> {
+    const row = await this.prisma.aiUsage.findUnique({
+      where: { organizationId_day: { organizationId, day } },
+    });
+    return row?.requests ?? 0;
+  }
+
   // ---- Organization scope ----
   // These take the organization id and filter through the project relation, so a
   // soft-deleted project drops out of every number and nothing needs an id list.

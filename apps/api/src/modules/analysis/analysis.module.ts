@@ -11,5 +11,7 @@ import { AnalysisService } from './analysis.service';
   imports: [MembershipsModule, ProjectsModule, SourceContextModule],
   controllers: [AnalysisController],
   providers: [AnalysisService, AnalysisRepository, AiClient],
+  // StatsModule asks the same AiClient whether the feature is configured.
+  exports: [AiClient],
 })
 export class AnalysisModule {}
