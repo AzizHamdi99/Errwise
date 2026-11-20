@@ -18,8 +18,8 @@ import { EventDetailsCard } from "./event-details-card";
 import { IssueStatusBadge, issueStatusMeta } from "./issue-status-badge";
 import { IssueStatusControl } from "./issue-status-control";
 import { RecentEventsCard } from "./recent-events-card";
-import { StackTraceCard } from "./stack-trace-card";
 import { AiAnalysisCard } from "@/features/analysis/components/ai-analysis-card";
+import { StackTraceWithSource } from "@/features/source-context/components/stack-trace-with-source";
 import { GithubIssueButton } from "@/features/github/components/github-issue-button";
 import { can } from "@/lib/permissions";
 
@@ -243,7 +243,15 @@ export function IssueDetailView() {
               projectId={projectId}
               issueId={issue.id}
             />
-            <StackTraceCard stack={selected.stack} message={selected.message} />
+            <StackTraceWithSource
+              key={selected.id}
+              orgId={orgId}
+              projectId={projectId}
+              issueId={issue.id}
+              event={selected}
+              sourceEnabled={project.sourceContextEnabled}
+              canManage={can(org.role, "project.write")}
+            />
             <RecentEventsCard
               events={events}
               total={issue.eventCount}
