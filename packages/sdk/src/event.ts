@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { hostname } from "node:os";
 import { types } from "node:util";
+import { normalizeCommitSha } from "./commit";
 import type { ResolvedConfig } from "./config";
 import { EVENT_LEVELS } from "./types";
 import type { CaptureOptions, ErrwiseEvent, RequestContext } from "./types";
@@ -155,6 +156,7 @@ export function enforceLimits(event: ErrwiseEvent): ErrwiseEvent {
       LIMITS.environment,
     ),
     release: release ? truncate(release, LIMITS.release) : undefined,
+    commitSha: normalizeCommitSha(event.commitSha),
     context: fitContext(event.context),
   };
 }
@@ -175,6 +177,7 @@ export function buildEvent(
     timestamp: now.toISOString(),
     environment: config.environment,
     release: config.release,
+    commitSha: config.commit,
     platform: "node",
     sdk: `${SDK_NAME}/${SDK_VERSION}`,
     context: buildContext(options),

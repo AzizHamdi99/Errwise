@@ -91,6 +91,20 @@ describe("resolveConfig", () => {
     expect(release({})).toBe("2.0.0");
   });
 
+  it("resolves the commit from the option or the platform variables", () => {
+    const commit = (options: Partial<ErrwiseOptions>) => {
+      const result = resolveConfig({ ...valid, ...options });
+      return result.ok ? result.config.commit : null;
+    };
+    vi.stubEnv("GITHUB_SHA", "");
+    vi.stubEnv("VERCEL_GIT_COMMIT_SHA", "");
+    expect(commit({ commit: "ABCDEF1" })).toBe("abcdef1");
+    expect(commit({})).toBeUndefined();
+    vi.stubEnv("VERCEL_GIT_COMMIT_SHA", "1234567890abcdef");
+    expect(commit({})).toBe("1234567890abcdef");
+    expect(commit({ commit: "oops" })).toBe("1234567890abcdef");
+  });
+
   it("keeps enabled on unless it is false", () => {
     const enabled = (value: boolean | undefined) => {
       const result = resolveConfig({ ...valid, enabled: value });
