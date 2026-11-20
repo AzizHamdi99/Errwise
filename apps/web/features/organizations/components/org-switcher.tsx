@@ -26,7 +26,7 @@ export function OrgSwitcher({ onNavigate }: { onNavigate?: () => void }) {
   function handleSwitchOrganization(orgId: string) {
     setLastOrgId(orgId);
     onNavigate?.();
-    router.push(`/organizations/${orgId}/projects`);
+    router.push(`/organizations/${orgId}`);
   }
 
   if (isPending) {
