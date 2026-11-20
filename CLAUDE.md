@@ -120,6 +120,7 @@ The SDK must never throw into, block, or slow the host app. `captureException` n
 
 - GitHub is the source of truth for who fixes what. Errwise only syncs state: issue creation, `closed`/`reopened` webhooks into `githubState`, and reopen + comment on regression.
 - Creating a GitHub issue takes an atomic claim (`githubIssueClaimedAt`, 60 s TTL). Webhooks are deduped by delivery id (`GithubWebhookDelivery`). GitHub sync for regressions never throws.
+- Source code on the issue page (ADR-005): opt-in per project (`Project.sourceContextEnabled`, owner only), read from GitHub on demand at the deployed `Event.commitSha`, cached in memory only, never stored. Frame paths are untrusted: only read paths that exist in the repository tree. Needs the GitHub App permission Contents: Read-only.
 - The install flow uses a signed, short-lived `state`, re-checks the owner role, and verifies the user's access to the installation. See `docs/adr/Github integration.md`.
 
 ## AI analysis (`modules/analysis`, `apps/ai`)
@@ -127,6 +128,7 @@ The SDK must never throw into, block, or slow the host app. `captureException` n
 - Flow: dashboard button -> `POST .../issues/:issueId/analysis` -> API loads the latest event (tenant-scoped via `ProjectsService`), scrubs it again, looks up the stored result, reserves one slot of the organization's daily allowance, calls `apps/ai` (`POST /analyze`, header `x-ai-secret`), validates the answer with Zod, stores it in `IssueAnalysis`.
 - Only `AiClient` talks to `apps/ai`. It never logs the request, the response or the secret, and maps failures to 503 (provider busy), 504 (timeout) and 502 (anything else).
 - Only the scrubbed text fields (`type`, `message`, `stack`, `environment`, `release`, node version) leave for the LLM. Never send the event `context`.
+- Source code reaches the LLM only when `Project.sourceContextEnabled` is on: up to five snippets (the lines around the failing frames), scrubbed like every other text, delimited as untrusted data in the prompt and part of the cache key. `AnalysisService` asks `SourceContextService` and never lets a code problem fail an analysis. `IssueAnalysis.result.sourceFiles` records which files were read, and the dashboard shows it.
 - The contract lives twice and must change together: `packages/shared/src/analysis.ts` (Zod) and `apps/ai/app/schemas/analysis.py` (Pydantic). The Python side rejects unknown fields.
 - Changing the prompt: bump `PROMPT_VERSION` in `apps/ai/app/analysis/prompts.py` and `ANALYSIS_CACHE_VERSION` in `analysis-input.ts` together, or old analyses keep being served.
 - The model output is untrusted text: render it as plain text only (no HTML, markdown or links) and never post it unescaped to GitHub or email.

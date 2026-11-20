@@ -9,6 +9,7 @@ export function toPublicProject(project: Project): PublicProject {
     slug: project.slug,
     platform: project.platform,
     retentionDays: project.retentionDays,
+    sourceContextEnabled: project.sourceContextEnabled,
     createdAt: project.createdAt.toISOString(),
   };
 }

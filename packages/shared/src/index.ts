@@ -11,3 +11,4 @@ export * from "./messaging";
 export * from "./github";
 export * from "./analysis";
 export * from "./stack-trace";
+export * from "./source-context";

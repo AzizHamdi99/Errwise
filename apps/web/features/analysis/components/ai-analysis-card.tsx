@@ -15,7 +15,8 @@ const CONFIDENCE: Record<AnalysisConfidence, { label: string; style: string }> =
   {
     low: {
       label: "Low confidence",
-      style: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
+      style:
+        "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
     },
     medium: {
       label: "Medium confidence",
@@ -75,11 +76,16 @@ function Shell({
   );
 }
 
-function Privacy() {
+function Privacy({ includesCode }: { includesCode: boolean }) {
   return (
-    <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-      <ShieldCheck className="size-3.5 shrink-0" aria-hidden />
-      Secrets and personal data are removed before anything is sent.
+    <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
+      <ShieldCheck className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+      <span>
+        Secrets and personal data are removed before anything is sent.
+        {includesCode
+          ? " The code around the failing lines is included, because source code is turned on for this project."
+          : ""}
+      </span>
     </p>
   );
 }
@@ -159,10 +165,25 @@ function Result({ analysis }: { analysis: PublicIssueAnalysis }) {
             </ul>
           </div>
         ) : null}
+
+        {analysis.sourceFiles.length > 0 ? (
+          <div className="space-y-1.5">
+            <Eyebrow>Code it read</Eyebrow>
+            <ul className="space-y-0.5 rounded-lg bg-muted/60 px-3 py-2 font-mono text-xs">
+              {analysis.sourceFiles.map((file) => (
+                <li key={file} className="break-all text-muted-foreground">
+                  {file}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </div>
 
       <footer className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t px-4 py-2 text-xs text-muted-foreground">
-        <span>AI-generated and can be wrong. Check it before you act on it.</span>
+        <span>
+          AI-generated and can be wrong. Check it before you act on it.
+        </span>
         <span title={new Date(analysis.createdAt).toLocaleString()}>
           {analysis.model} · {formatRelative(analysis.createdAt)}
         </span>
@@ -175,9 +196,16 @@ interface Props {
   orgId: string;
   projectId: string;
   issueId: string;
+  /** The project's source code switch: when on, the analysis also reads the code. */
+  includesCode: boolean;
 }
 
-export function AiAnalysisCard({ orgId, projectId, issueId }: Props) {
+export function AiAnalysisCard({
+  orgId,
+  projectId,
+  issueId,
+  includesCode,
+}: Props) {
   const query = useIssueAnalysis(orgId, projectId, issueId);
   const analyze = useAnalyzeIssue(orgId, projectId, issueId);
 
@@ -217,7 +245,9 @@ export function AiAnalysisCard({ orgId, projectId, issueId }: Props) {
               aria-hidden
             />
             <div className="space-y-1">
-              <p className="text-sm font-medium">The analysis didn&apos;t work</p>
+              <p className="text-sm font-medium">
+                The analysis didn&apos;t work
+              </p>
               <p role="alert" className="text-sm text-muted-foreground">
                 {errorMessage(failure)}
               </p>
@@ -226,7 +256,9 @@ export function AiAnalysisCard({ orgId, projectId, issueId }: Props) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => (analyze.isError ? analyze.mutate() : query.refetch())}
+            onClick={() =>
+              analyze.isError ? analyze.mutate() : query.refetch()
+            }
           >
             Try again
           </Button>
@@ -244,7 +276,7 @@ export function AiAnalysisCard({ orgId, projectId, issueId }: Props) {
             Get a plain-language summary, the probable cause and a suggested
             fix, based on the latest event of this issue.
           </p>
-          <Privacy />
+          <Privacy includesCode={includesCode} />
         </div>
         <Button size="sm" onClick={() => analyze.mutate()}>
           <Sparkles aria-hidden />

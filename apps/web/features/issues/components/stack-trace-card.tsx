@@ -4,8 +4,16 @@ import { ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { parseStack, shortPath } from "@errwise/shared";
-import type { StackFrame } from "@errwise/shared";
+import type { SourceFrame, StackFrame } from "@errwise/shared";
 import { CopyButton } from "@/components/shared/copy-button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { SourceBannerView } from "@/features/source-context/components/source-banner";
+import { SourceCode } from "@/features/source-context/components/source-code";
+import {
+  REASON_HINT,
+  REASON_LABEL,
+} from "@/features/source-context/source-view";
+import type { SourceBanner } from "@/features/source-context/source-view";
 
 type Indexed = { frame: StackFrame; index: number };
 type Segment =
@@ -26,13 +34,13 @@ function buildSegments(frames: StackFrame[]): Segment[] {
   return segments;
 }
 
-function FrameRow({ frame, index }: Indexed) {
+function FrameLabel({ frame, index }: Indexed) {
   const location = `${shortPath(frame.file)}${
     frame.line !== null ? `:${frame.line}:${frame.column}` : ""
   }`;
 
   return (
-    <li className="flex items-baseline gap-3 px-4 py-1.5 font-mono text-xs">
+    <>
       <span className="w-6 shrink-0 text-right tabular-nums text-muted-foreground">
         {index + 1}
       </span>
@@ -48,6 +56,62 @@ function FrameRow({ frame, index }: Indexed) {
           {location}
         </span>
       </span>
+    </>
+  );
+}
+
+interface FrameRowProps extends Indexed {
+  source?: SourceFrame;
+  open?: boolean;
+  onToggle?: () => void;
+}
+
+function FrameRow({
+  frame,
+  index,
+  source,
+  open = false,
+  onToggle,
+}: FrameRowProps) {
+  const found = source?.status === "found" ? source : null;
+  const rowClass =
+    "flex w-full items-baseline gap-3 px-4 py-1.5 font-mono text-xs";
+
+  return (
+    <li>
+      {found ? (
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={open}
+          className={cn(
+            rowClass,
+            "text-left outline-none transition-colors hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+          )}
+        >
+          <FrameLabel frame={frame} index={index} />
+          <ChevronRight
+            className={cn(
+              "ml-auto size-3.5 shrink-0 self-center text-muted-foreground transition-transform",
+              open && "rotate-90",
+            )}
+            aria-hidden
+          />
+        </button>
+      ) : (
+        <div className={rowClass}>
+          <FrameLabel frame={frame} index={index} />
+          {source?.status === "unresolved" ? (
+            <span
+              className="ml-auto shrink-0 pl-3 font-sans text-[11px] text-muted-foreground"
+              title={REASON_HINT[source.reason]}
+            >
+              {REASON_LABEL[source.reason]}
+            </span>
+          ) : null}
+        </div>
+      )}
+      {found && open ? <SourceCode frame={found} /> : null}
     </li>
   );
 }
@@ -87,19 +151,43 @@ function LibraryGroup({
   );
 }
 
+interface Props {
+  stack: string | null;
+  message: string;
+  /** The code behind the frames, by frame index. Only filled when source code is on. */
+  sourceFrames?: ReadonlyMap<number, SourceFrame>;
+  sourceLoading?: boolean;
+  /** One line that explains what is missing, when something is. */
+  banner?: SourceBanner | null;
+  onRetry?: () => void;
+}
+
 export function StackTraceCard({
   stack,
   message,
-}: {
-  stack: string | null;
-  message: string;
-}) {
+  sourceFrames,
+  sourceLoading = false,
+  banner = null,
+  onRetry,
+}: Props) {
   const parsed = useMemo(() => (stack ? parseStack(stack) : null), [stack]);
   const segments = useMemo(
     () => (parsed ? buildSegments(parsed.frames) : []),
     [parsed],
   );
   const hasAppFrames = segments.some((segment) => segment.kind === "app");
+
+  // The first frame with code starts open, the others closed. A click overrides that.
+  // The card is keyed by event, so this resets when another event is selected.
+  const [toggled, setToggled] = useState<Record<number, boolean>>({});
+  const firstWithCode = useMemo(() => {
+    if (!sourceFrames) return null;
+    const indexes = [...sourceFrames.values()]
+      .filter((f) => f.status === "found")
+      .map((f) => f.frameIndex);
+    return indexes.length > 0 ? Math.min(...indexes) : null;
+  }, [sourceFrames]);
+  const isOpen = (index: number) => toggled[index] ?? index === firstWithCode;
 
   return (
     <section aria-label="Stack trace" className="rounded-xl border bg-card">
@@ -126,10 +214,37 @@ export function StackTraceCard({
               {parsed.header}
             </p>
           ) : null}
+
+          <div className="pt-2">
+            {sourceLoading ? (
+              <Skeleton
+                className="mx-4 mb-2 h-8"
+                aria-label="Loading source code"
+              />
+            ) : null}
+            {banner ? (
+              <SourceBannerView
+                banner={banner}
+                onRetry={onRetry ?? (() => {})}
+              />
+            ) : null}
+          </div>
+
           <ol className="pt-1">
             {segments.map((segment, i) =>
               segment.kind === "app" ? (
-                <FrameRow key={segment.item.index} {...segment.item} />
+                <FrameRow
+                  key={segment.item.index}
+                  {...segment.item}
+                  source={sourceFrames?.get(segment.item.index)}
+                  open={isOpen(segment.item.index)}
+                  onToggle={() =>
+                    setToggled((current) => ({
+                      ...current,
+                      [segment.item.index]: !isOpen(segment.item.index),
+                    }))
+                  }
+                />
               ) : (
                 <LibraryGroup
                   key={`lib-${i}`}

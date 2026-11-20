@@ -44,7 +44,12 @@ export class GithubRepository {
   async disconnect(projectId: string): Promise<void> {
     await this.prisma.project.update({
       where: { id: projectId },
-      data: { githubInstallationId: null, githubRepo: null },
+      // Disconnecting also withdraws the consent to read code from that repository.
+      data: {
+        githubInstallationId: null,
+        githubRepo: null,
+        sourceContextEnabled: false,
+      },
     });
   }
   /** Scoped by project and organization, so another tenant's issue returns null. */

@@ -56,6 +56,8 @@ model Project {
   slug           String
   platform       String                @default("node")
   retentionDays  Int                   @default(30)
+  /// Opt-in. Show and analyze the code around stack frames, read from the connected repo.
+  sourceContextEnabled Boolean         @default(false)
   createdAt      DateTime              @default(now()) @db.Timestamptz(3)
   updatedAt      DateTime              @updatedAt @db.Timestamptz(3)
   deletedAt      DateTime?             @db.Timestamptz(3)
