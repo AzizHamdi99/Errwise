@@ -1,4 +1,4 @@
-import { fillSeries, resolveWindow } from './stats-range';
+import { fillProjectSeries, fillSeries, resolveWindow } from './stats-range';
 
 const NOW = new Date('2026-11-20T15:42:10.000Z');
 
@@ -89,6 +89,48 @@ describe('fillSeries', () => {
     );
     expect(series.reduce((sum, p) => sum + p.error + p.fatal + p.info, 0)).toBe(
       0,
+    );
+  });
+});
+
+describe('fillProjectSeries', () => {
+  const window = resolveWindow('7d', NOW);
+
+  it('returns one empty point per bucket when there are no rows', () => {
+    const series = fillProjectSeries([], window);
+    expect(series).toHaveLength(7);
+    expect(series.every((p) => Object.keys(p.byProject).length === 0)).toBe(
+      true,
+    );
+  });
+
+  it('splits a bucket by project and sums repeated rows', () => {
+    const day = new Date('2026-11-20T00:00:00.000Z');
+    const series = fillProjectSeries(
+      [
+        { bucket: day, projectId: 'p1', count: 4 },
+        { bucket: day, projectId: 'p2', count: 1 },
+        { bucket: day, projectId: 'p1', count: 2 },
+      ],
+      window,
+    );
+    expect(series[6].byProject).toEqual({ p1: 6, p2: 1 });
+    expect(series[5].byProject).toEqual({});
+  });
+
+  it('ignores rows outside the window', () => {
+    const series = fillProjectSeries(
+      [
+        {
+          bucket: new Date('2026-01-01T00:00:00.000Z'),
+          projectId: 'p1',
+          count: 9,
+        },
+      ],
+      window,
+    );
+    expect(series.every((p) => Object.keys(p.byProject).length === 0)).toBe(
+      true,
     );
   });
 });

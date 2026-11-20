@@ -1,4 +1,4 @@
-import type { SeriesPoint, StatsRange } from '@errwise/shared';
+import type { OrgSeriesPoint, SeriesPoint, StatsRange } from '@errwise/shared';
 
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
@@ -63,6 +63,34 @@ export function fillSeries(
     const point = points.get(row.bucket.getTime());
     if (!point || !(row.level in EMPTY_LEVELS)) continue;
     point[row.level as keyof typeof EMPTY_LEVELS] += row.count;
+  }
+
+  return [...points.values()];
+}
+
+export interface ProjectCountRow {
+  bucket: Date;
+  projectId: string;
+  count: number;
+}
+
+/** Same idea as fillSeries, but the counts are split by project instead of by level. */
+export function fillProjectSeries(
+  rows: ProjectCountRow[],
+  window: StatsWindow,
+): OrgSeriesPoint[] {
+  const size = bucketMs(window.unit);
+  const points = new Map<number, OrgSeriesPoint>();
+
+  for (let t = window.from.getTime(); t < window.to.getTime(); t += size) {
+    points.set(t, { bucket: new Date(t).toISOString(), byProject: {} });
+  }
+
+  for (const row of rows) {
+    const point = points.get(row.bucket.getTime());
+    if (!point) continue;
+    point.byProject[row.projectId] =
+      (point.byProject[row.projectId] ?? 0) + row.count;
   }
 
   return [...points.values()];

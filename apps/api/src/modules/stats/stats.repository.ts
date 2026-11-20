@@ -1,7 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import type { Issue } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
-import type { BucketUnit, LevelCountRow } from './stats-range';
+import type { BucketUnit, LevelCountRow, ProjectCountRow } from './stats-range';
+
+export type IssueWithProject = Issue & {
+  project: { id: string; name: string };
+};
+
+export interface ProjectEventCount {
+  projectId: string;
+  count: number;
+}
 
 export interface TimeSpan {
   from: Date;
@@ -115,4 +124,139 @@ export class StatsRepository {
       where: { projectId, id: { in: ids } },
     });
   }
+
+  // ---- Organization scope ----
+  // These take the organization id and filter through the project relation, so a
+  // soft-deleted project drops out of every number and nothing needs an id list.
+
+  countEventsInOrg(organizationId: string, span: TimeSpan): Promise<number> {
+    return this.prisma.event.count({
+      where: {
+        project: activeProjectOf(organizationId),
+        timestamp: { gte: span.from, lt: span.to },
+      },
+    });
+  }
+
+  countUnresolvedIssuesInOrg(organizationId: string): Promise<number> {
+    return this.prisma.issue.count({
+      where: {
+        project: activeProjectOf(organizationId),
+        status: 'unresolved',
+      },
+    });
+  }
+
+  countNewIssuesInOrg(organizationId: string, span: TimeSpan): Promise<number> {
+    return this.prisma.issue.count({
+      where: {
+        project: activeProjectOf(organizationId),
+        firstSeenAt: { gte: span.from, lt: span.to },
+      },
+    });
+  }
+
+  countRegressedIssuesInOrg(
+    organizationId: string,
+    span: TimeSpan,
+  ): Promise<number> {
+    return this.prisma.issue.count({
+      where: {
+        project: activeProjectOf(organizationId),
+        lastRegressionAt: { gte: span.from, lt: span.to },
+      },
+    });
+  }
+
+  /** Sparse rows, like eventsByBucketAndLevel, but split by project. */
+  async eventsByBucketAndProject(
+    organizationId: string,
+    span: TimeSpan,
+    unit: BucketUnit,
+  ): Promise<ProjectCountRow[]> {
+    const rows = await this.prisma.$queryRaw<
+      { bucket: Date; projectId: string; count: bigint }[]
+    >`
+      SELECT date_trunc(${unit}, e."timestamp", 'UTC') AS bucket,
+             e."projectId" AS "projectId",
+             COUNT(*) AS count
+      FROM "Event" e
+      JOIN "Project" p ON p."id" = e."projectId"
+      WHERE p."organizationId" = ${organizationId}::uuid
+        AND p."deletedAt" IS NULL
+        AND e."timestamp" >= ${span.from}
+        AND e."timestamp" < ${span.to}
+      GROUP BY 1, 2
+    `;
+    return rows.map((row) => ({ ...row, count: Number(row.count) }));
+  }
+
+  async eventCountsByProject(
+    organizationId: string,
+    span: TimeSpan,
+  ): Promise<ProjectEventCount[]> {
+    const rows = await this.prisma.event.groupBy({
+      by: ['projectId'],
+      where: {
+        project: activeProjectOf(organizationId),
+        timestamp: { gte: span.from, lt: span.to },
+      },
+      _count: { _all: true },
+    });
+    return rows.map((row) => ({
+      projectId: row.projectId,
+      count: row._count._all,
+    }));
+  }
+
+  async unresolvedCountsByProject(
+    organizationId: string,
+  ): Promise<ProjectEventCount[]> {
+    const rows = await this.prisma.issue.groupBy({
+      by: ['projectId'],
+      where: { project: activeProjectOf(organizationId), status: 'unresolved' },
+      _count: { _all: true },
+    });
+    return rows.map((row) => ({
+      projectId: row.projectId,
+      count: row._count._all,
+    }));
+  }
+
+  async topIssueCountsInOrg(
+    organizationId: string,
+    span: TimeSpan,
+  ): Promise<TopIssueCount[]> {
+    const rows = await this.prisma.event.groupBy({
+      by: ['issueId'],
+      where: {
+        project: activeProjectOf(organizationId),
+        timestamp: { gte: span.from, lt: span.to },
+      },
+      _count: { _all: true },
+      orderBy: { _count: { issueId: 'desc' } },
+      take: TOP_LIMIT,
+    });
+    return rows.map((row) => ({
+      issueId: row.issueId,
+      count: row._count._all,
+    }));
+  }
+
+  /** Scoped by organization as well as the ids: an id from another tenant finds nothing. */
+  findIssuesInOrg(
+    organizationId: string,
+    ids: string[],
+  ): Promise<IssueWithProject[]> {
+    if (ids.length === 0) return Promise.resolve([]);
+    return this.prisma.issue.findMany({
+      where: { id: { in: ids }, project: activeProjectOf(organizationId) },
+      include: { project: { select: { id: true, name: true } } },
+    });
+  }
 }
+
+const activeProjectOf = (organizationId: string) => ({
+  organizationId,
+  deletedAt: null,
+});
