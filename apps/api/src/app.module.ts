@@ -22,6 +22,7 @@ import { SubscriptionsModule } from './modules/subscriptions/subscriptions.modul
 import { MessagingModule } from './modules/messaging/messaging.module';
 import { GithubModule } from './modules/github/github.module';
 import { AnalysisModule } from './modules/analysis/analysis.module';
+import { SourceContextModule } from './modules/source-context/source-context.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { AnalysisModule } from './modules/analysis/analysis.module';
     MessagingModule,
     GithubModule,
     AnalysisModule,
+    SourceContextModule,
   ],
   controllers: [AppController],
   providers: [
