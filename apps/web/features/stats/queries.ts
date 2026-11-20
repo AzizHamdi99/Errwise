@@ -3,6 +3,7 @@ import type {
   IssueStats,
   OrgOverview,
   ProjectOverview,
+  ReleasesOverview,
   StatsRange,
 } from "@errwise/shared";
 import { api } from "@/lib/api";
@@ -56,6 +57,23 @@ export function useIssueStats(
         `/organizations/${orgId}/projects/${projectId}/issues/${issueId}/stats?range=${range}`,
       ),
     enabled: !!orgId && !!projectId && !!issueId,
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useReleases(
+  orgId: string,
+  projectId: string,
+  range: StatsRange,
+) {
+  return useQuery({
+    queryKey: [...statsRoot(projectId), "releases", range] as const,
+    queryFn: () =>
+      api<ReleasesOverview>(
+        `/organizations/${orgId}/projects/${projectId}/stats/releases?range=${range}`,
+      ),
+    enabled: !!orgId && !!projectId,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
   });
