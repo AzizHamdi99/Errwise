@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import type { Issue } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import type { BucketUnit, LevelCountRow, ProjectCountRow } from './stats-range';
@@ -24,6 +25,11 @@ export interface TopIssueCount {
 
 export interface EnvironmentRow {
   environment: string;
+  count: number;
+}
+
+export interface ReleaseRow {
+  release: string | null;
   count: number;
 }
 
@@ -67,7 +73,12 @@ export class StatsRepository {
     projectId: string,
     span: TimeSpan,
     unit: BucketUnit,
+    issueId?: string,
   ): Promise<LevelCountRow[]> {
+    // A fragment, not string concatenation: the id is still a bound parameter.
+    const issueFilter = issueId
+      ? Prisma.sql`AND "issueId" = ${issueId}::uuid`
+      : Prisma.empty;
     const rows = await this.prisma.$queryRaw<
       { bucket: Date; level: string; count: bigint }[]
     >`
@@ -78,6 +89,7 @@ export class StatsRepository {
       WHERE "projectId" = ${projectId}::uuid
         AND "timestamp" >= ${span.from}
         AND "timestamp" < ${span.to}
+        ${issueFilter}
       GROUP BY 1, 2
     `;
     return rows.map((row) => ({ ...row, count: Number(row.count) }));
@@ -86,16 +98,44 @@ export class StatsRepository {
   async eventsByEnvironment(
     projectId: string,
     span: TimeSpan,
+    issueId?: string,
   ): Promise<EnvironmentRow[]> {
     const rows = await this.prisma.event.groupBy({
       by: ['environment'],
-      where: { projectId, timestamp: { gte: span.from, lt: span.to } },
+      where: {
+        projectId,
+        ...(issueId ? { issueId } : {}),
+        timestamp: { gte: span.from, lt: span.to },
+      },
       _count: { _all: true },
       orderBy: { _count: { environment: 'desc' } },
       take: TOP_LIMIT,
     });
     return rows.map((row) => ({
       environment: row.environment,
+      count: row._count._all,
+    }));
+  }
+
+  /** Events of one issue by release. `release` is null for events sent without one. */
+  async eventsByRelease(
+    projectId: string,
+    issueId: string,
+    span: TimeSpan,
+  ): Promise<ReleaseRow[]> {
+    const rows = await this.prisma.event.groupBy({
+      by: ['release'],
+      where: {
+        projectId,
+        issueId,
+        timestamp: { gte: span.from, lt: span.to },
+      },
+      _count: { _all: true },
+      orderBy: { _count: { release: 'desc' } },
+      take: TOP_LIMIT,
+    });
+    return rows.map((row) => ({
+      release: row.release,
       count: row._count._all,
     }));
   }

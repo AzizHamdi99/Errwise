@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import type {
+  IssueStats,
   IssueStatus,
   OrgOverview,
   OrgProjectStat,
@@ -80,6 +81,43 @@ export class StatsService {
       series: fillSeries(levelRows, window),
       environments,
       topIssues,
+    };
+  }
+
+  async issueStats(
+    organizationId: string,
+    projectId: string,
+    issueId: string,
+    range: StatsRange,
+    now: Date = new Date(),
+  ): Promise<IssueStats> {
+    await this.projects.get(organizationId, projectId); // 404 if not in this organization
+    // The issue is looked up inside the project, so another project's issue id finds nothing.
+    const [issue] = await this.repo.findIssues(projectId, [issueId]);
+    if (!issue) throw new NotFoundException('Issue not found');
+
+    const window = resolveWindow(range, now);
+    const span = { from: window.from, to: window.to };
+
+    const [levelRows, environments, releases] = await Promise.all([
+      this.repo.eventsByBucketAndLevel(projectId, span, window.unit, issueId),
+      this.repo.eventsByEnvironment(projectId, span, issueId),
+      this.repo.eventsByRelease(projectId, issueId, span),
+    ]);
+
+    const series = fillSeries(levelRows, window).map((point) => ({
+      bucket: point.bucket,
+      count: point.fatal + point.error + point.warning + point.info,
+    }));
+
+    return {
+      range,
+      from: window.from.toISOString(),
+      to: window.to.toISOString(),
+      total: series.reduce((sum, point) => sum + point.count, 0),
+      series,
+      environments,
+      releases,
     };
   }
 
