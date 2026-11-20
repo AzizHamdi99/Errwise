@@ -1,6 +1,12 @@
 "use client";
 
-import { FolderKanban, LayoutDashboard, Settings, Users } from "lucide-react";
+import {
+  FolderKanban,
+  Gauge,
+  LayoutDashboard,
+  Settings,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Brand } from "@/components/shared/brand";
@@ -14,6 +20,7 @@ import { ThemeToggle } from "../shared/theme-toggle";
 const NAV = [
   { label: "Overview", segment: "", icon: LayoutDashboard },
   { label: "Projects", segment: "projects", icon: FolderKanban },
+  { label: "Usage", segment: "usage", icon: Gauge },
   { label: "Members", segment: "members", icon: Users },
   { label: "Settings", segment: "settings", icon: Settings },
 ] as const;

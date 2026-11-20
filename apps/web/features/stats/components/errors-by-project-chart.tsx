@@ -7,7 +7,6 @@ import type {
   StatsRange,
 } from "@errwise/shared";
 import {
-  type ChartConfig,
   ChartContainer,
   ChartLegend,
   ChartLegendContent,
@@ -15,17 +14,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { bucketLabel } from "../bucket-label";
-
-// The palette has five colours. The busiest four projects get one each and every
-// other project is merged into "Other", so the chart never needs a sixth hue.
-const NAMED_SLOTS = 4;
-const SLOT_COLORS = [
-  "var(--chart-1)",
-  "var(--chart-2)",
-  "var(--chart-3)",
-  "var(--chart-4)",
-];
-const OTHER_KEY = "other";
+import { groupSeriesByProject, type ProjectSeriesRow } from "../project-series";
 
 interface Props {
   series: OrgSeriesPoint[];
@@ -34,37 +23,8 @@ interface Props {
   range: StatsRange;
 }
 
-type Row = { bucket: string } & Record<string, number | string>;
-
 export function ErrorsByProjectChart({ series, projects, range }: Props) {
-  // Keys are slot names, not project ids: ids start with a digit, which is awkward in CSS variable names.
-  const named = projects.slice(0, NAMED_SLOTS);
-  const slotOf = new Map(named.map((project, i) => [project.id, `p${i}`]));
-  const hasOther = projects.length > NAMED_SLOTS;
-
-  const config: ChartConfig = {
-    ...Object.fromEntries(
-      named.map((project, i) => [
-        `p${i}`,
-        { label: project.name, color: SLOT_COLORS[i] },
-      ]),
-    ),
-    ...(hasOther
-      ? { [OTHER_KEY]: { label: "Other", color: "var(--muted-foreground)" } }
-      : {}),
-  };
-  const keys = Object.keys(config);
-
-  const data: Row[] = series.map((point) => {
-    const row: Row = { bucket: point.bucket };
-    for (const key of keys) row[key] = 0;
-    for (const [projectId, count] of Object.entries(point.byProject)) {
-      const key = slotOf.get(projectId) ?? OTHER_KEY;
-      if (key in row) row[key] = (row[key] as number) + count;
-    }
-    return row;
-  });
-
+  const { config, keys, data } = groupSeriesByProject(series, projects);
   const label = bucketLabel(range);
 
   return (
@@ -90,8 +50,9 @@ export function ErrorsByProjectChart({ series, projects, range }: Props) {
             <ChartTooltipContent
               indicator="line"
               labelFormatter={(_, payload) => {
-                const bucket = (payload?.[0]?.payload as Row | undefined)
-                  ?.bucket;
+                const bucket = (
+                  payload?.[0]?.payload as ProjectSeriesRow | undefined
+                )?.bucket;
                 return typeof bucket === "string" ? `${label(bucket)} UTC` : "";
               }}
             />

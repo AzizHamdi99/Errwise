@@ -2,6 +2,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import type {
   IssueStats,
   OrgOverview,
+  OrgUsage,
   ProjectOverview,
   ReleasesOverview,
   StatsRange,
@@ -76,5 +77,15 @@ export function useReleases(
     enabled: !!orgId && !!projectId,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
+  });
+}
+
+export function useOrgUsage(orgId: string) {
+  return useQuery({
+    queryKey: [...orgStatsRoot(orgId), "usage"] as const,
+    queryFn: () => api<OrgUsage>(`/organizations/${orgId}/stats/usage`),
+    enabled: !!orgId,
+    // The AI counter moves with every analysis, so keep it fresher than the charts.
+    staleTime: 30_000,
   });
 }
