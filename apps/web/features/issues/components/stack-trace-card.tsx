@@ -3,8 +3,8 @@
 import { ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
-import { parseStack, shortPath } from "../stack-trace";
-import type { StackFrame } from "../stack-trace";
+import { parseStack, shortPath } from "@errwise/shared";
+import type { StackFrame } from "@errwise/shared";
 import { CopyButton } from "@/components/shared/copy-button";
 
 type Indexed = { frame: StackFrame; index: number };

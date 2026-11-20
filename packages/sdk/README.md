@@ -130,18 +130,31 @@ Errwise.captureException(error, {
 
 ## Options
 
-| Option                  | Default                   | Description                                                  |
-| ----------------------- | ------------------------- | ------------------------------------------------------------ |
-| `apiKey`                | `ERRWISE_API_KEY` env var | Your project key (`ew_live_...`)                             |
-| `environment`           | `NODE_ENV`                | Shown as a filter in the dashboard                           |
-| `release`               | `ERRWISE_RELEASE` env var | Your app version                                             |
-| `enabled`               | `true`                    | Set to `false` to turn the SDK off (tests, local)            |
-| `beforeSend`            | none                      | Edit or drop an event before it is sent. Must be synchronous |
-| `captureUncaughtErrors` | `true`                    | Capture uncaught exceptions and unhandled rejections         |
-| `endpoint`              | Errwise cloud             | Only set it if you self-host                                 |
-| `debug`                 | `false`                   | Print what the SDK is doing                                  |
+| Option                  | Default                     | Description                                                  |
+| ----------------------- | --------------------------- | ------------------------------------------------------------ |
+| `apiKey`                | `ERRWISE_API_KEY` env var   | Your project key (`ew_live_...`)                             |
+| `environment`           | `NODE_ENV`                  | Shown as a filter in the dashboard                           |
+| `release`               | `ERRWISE_RELEASE` env var   | Your app version                                             |
+| `commit`                | your host's commit variable | The deployed Git commit, see "Source context" below          |
+| `enabled`               | `true`                      | Set to `false` to turn the SDK off (tests, local)            |
+| `beforeSend`            | none                        | Edit or drop an event before it is sent. Must be synchronous |
+| `captureUncaughtErrors` | `true`                      | Capture uncaught exceptions and unhandled rejections         |
+| `endpoint`              | Errwise cloud               | Only set it if you self-host                                 |
+| `debug`                 | `false`                     | Print what the SDK is doing                                  |
 
 A wrong configuration never throws. `init` prints a warning and the SDK stays off.
+
+## Source context
+
+With the deployed commit, Errwise can show the code around each stack frame (when your
+project has the GitHub integration and source code turned on). The SDK finds the commit by
+itself from the first of these variables that holds a Git hash:
+
+`ERRWISE_COMMIT_SHA`, `VERCEL_GIT_COMMIT_SHA`, `GITHUB_SHA`, `RENDER_GIT_COMMIT`,
+`RAILWAY_GIT_COMMIT_SHA`, `SOURCE_VERSION` (Heroku), `CF_PAGES_COMMIT_SHA`.
+
+Anywhere else, pass it yourself: `Errwise.init({ apiKey, commit: "<git rev-parse HEAD>" })`.
+A value that is not a 7 to 64 character hex hash is ignored, and the error is still sent.
 
 ## API
 

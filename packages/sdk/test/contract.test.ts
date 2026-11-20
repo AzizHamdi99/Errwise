@@ -8,6 +8,7 @@ const config: ResolvedConfig = {
   eventsUrl: "http://localhost:4000/v1/events",
   environment: "production",
   release: "1.0.0",
+  commit: undefined,
   enabled: true,
   debug: false,
   beforeSend: undefined,
@@ -39,5 +40,12 @@ describe("SDK events match the API schema", () => {
   it.each(cases)("%s", (_name, input, options) => {
     const result = eventSchema.safeParse(buildEvent(input, config, options));
     expect(result.error?.issues ?? []).toEqual([]);
+  });
+
+  it("an event with a commit", () => {
+    const event = buildEvent(new Error("x"), { ...config, commit: "abcdef1" });
+    const result = eventSchema.safeParse(event);
+    expect(result.error?.issues ?? []).toEqual([]);
+    expect(result.data?.commitSha).toBe("abcdef1");
   });
 });

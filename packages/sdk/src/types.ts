@@ -11,6 +11,7 @@ export interface ErrwiseEvent {
   timestamp: string;
   environment: string;
   release?: string;
+  commitSha?: string;
   platform: string;
   sdk: string;
   context?: Record<string, unknown>;
@@ -43,6 +44,13 @@ export interface ErrwiseOptions {
   environment?: string;
   /** Defaults to the ERRWISE_RELEASE environment variable. */
   release?: string;
+  /**
+   * The deployed Git commit (7 to 64 hex characters). It lets Errwise show the code around
+   * a stack frame. Defaults to the commit variable of your host: VERCEL_GIT_COMMIT_SHA,
+   * GITHUB_SHA, RENDER_GIT_COMMIT, RAILWAY_GIT_COMMIT_SHA, SOURCE_VERSION or
+   * CF_PAGES_COMMIT_SHA, or ERRWISE_COMMIT_SHA.
+   */
+  commit?: string;
   /** Set to false to turn the SDK off (tests, local development). */
   enabled?: boolean;
   /**

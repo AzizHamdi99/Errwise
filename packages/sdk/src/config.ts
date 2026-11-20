@@ -1,3 +1,4 @@
+import { resolveCommit } from "./commit";
 import type { ErrwiseEvent, ErrwiseOptions } from "./types";
 
 // The same pattern the API enforces. Update both if the key format changes.
@@ -11,6 +12,7 @@ export interface ResolvedConfig {
   eventsUrl: string;
   environment: string;
   release: string | undefined;
+  commit: string | undefined;
   enabled: boolean;
   debug: boolean;
   beforeSend: ((event: ErrwiseEvent) => ErrwiseEvent | null) | undefined;
@@ -74,6 +76,7 @@ export function resolveConfig(options: ErrwiseOptions): ConfigResult {
       release:
         clean(options.release, MAX_RELEASE) ??
         clean(process.env.ERRWISE_RELEASE, MAX_RELEASE),
+      commit: resolveCommit(options.commit),
       enabled: options.enabled !== false,
       debug: options.debug === true,
       captureUncaughtErrors: options.captureUncaughtErrors !== false,

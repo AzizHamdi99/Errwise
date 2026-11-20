@@ -14,6 +14,7 @@ function event(overrides: Partial<Event> = {}): Event {
     platform: 'node',
     environment: 'production',
     release: '1.0.0',
+    commitSha: null,
     sdk: null,
     context: null,
     timestamp: new Date('2026-01-01T00:00:00Z'),
