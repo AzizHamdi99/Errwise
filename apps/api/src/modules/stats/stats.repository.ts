@@ -33,7 +33,20 @@ export interface ReleaseRow {
   count: number;
 }
 
+export interface ReleaseActivityRow {
+  release: string | null;
+  events: number;
+  firstSeenAt: Date;
+  lastSeenAt: Date;
+}
+
+export interface NewIssuesByRelease {
+  release: string | null;
+  count: number;
+}
+
 const TOP_LIMIT = 10;
+const RELEASES_LIMIT = 20;
 
 // Every query takes projectId first and a [from, to) span, so it stays on the
 // (projectId, timestamp) index and can never read another project's events.
@@ -113,6 +126,51 @@ export class StatsRepository {
     });
     return rows.map((row) => ({
       environment: row.environment,
+      count: row._count._all,
+    }));
+  }
+
+  /** Releases seen in the span, most recently seen first. Null groups events without a release. */
+  async releaseActivity(
+    projectId: string,
+    span: TimeSpan,
+  ): Promise<ReleaseActivityRow[]> {
+    const rows = await this.prisma.event.groupBy({
+      by: ['release'],
+      where: { projectId, timestamp: { gte: span.from, lt: span.to } },
+      _count: { _all: true },
+      _min: { timestamp: true },
+      _max: { timestamp: true },
+      orderBy: { _max: { timestamp: 'desc' } },
+      take: RELEASES_LIMIT,
+    });
+    return rows.flatMap((row) =>
+      // A group always has events, so both bounds exist; the check only satisfies the types.
+      row._min.timestamp && row._max.timestamp
+        ? [
+            {
+              release: row.release,
+              events: row._count._all,
+              firstSeenAt: row._min.timestamp,
+              lastSeenAt: row._max.timestamp,
+            },
+          ]
+        : [],
+    );
+  }
+
+  /** Issues first seen in the span, by the release of their first event. */
+  async newIssuesByRelease(
+    projectId: string,
+    span: TimeSpan,
+  ): Promise<NewIssuesByRelease[]> {
+    const rows = await this.prisma.issue.groupBy({
+      by: ['firstRelease'],
+      where: { projectId, firstSeenAt: { gte: span.from, lt: span.to } },
+      _count: { _all: true },
+    });
+    return rows.map((row) => ({
+      release: row.firstRelease,
       count: row._count._all,
     }));
   }

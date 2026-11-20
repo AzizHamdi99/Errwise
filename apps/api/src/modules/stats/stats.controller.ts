@@ -1,6 +1,15 @@
 import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
-import { idSchema, projectOverviewQuerySchema } from '@errwise/shared';
-import type { ProjectOverview, ProjectOverviewQuery } from '@errwise/shared';
+import {
+  idSchema,
+  projectOverviewQuerySchema,
+  releasesQuerySchema,
+} from '@errwise/shared';
+import type {
+  ProjectOverview,
+  ProjectOverviewQuery,
+  ReleasesOverview,
+  ReleasesQuery,
+} from '@errwise/shared';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { JwtAuthGuard } from '../../common/security/jwt-auth.guard';
 import { CurrentMembership } from '../memberships/decorators/current-membership.decorator';
@@ -21,6 +30,19 @@ export class StatsController {
     @CurrentMembership() membership: OrgMembership,
   ): Promise<ProjectOverview> {
     return this.stats.projectOverview(
+      membership.organizationId,
+      projectId,
+      query.range,
+    );
+  }
+
+  @Get('releases')
+  releases(
+    @Param('projectId', new ZodValidationPipe(idSchema)) projectId: string,
+    @Query(new ZodValidationPipe(releasesQuerySchema)) query: ReleasesQuery,
+    @CurrentMembership() membership: OrgMembership,
+  ): Promise<ReleasesOverview> {
+    return this.stats.releases(
       membership.organizationId,
       projectId,
       query.range,

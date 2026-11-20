@@ -6,6 +6,8 @@ import type {
   OrgProjectStat,
   OrgTopIssue,
   ProjectOverview,
+  ReleaseStat,
+  ReleasesOverview,
   StatsRange,
   TopIssue,
 } from '@errwise/shared';
@@ -81,6 +83,38 @@ export class StatsService {
       series: fillSeries(levelRows, window),
       environments,
       topIssues,
+    };
+  }
+
+  async releases(
+    organizationId: string,
+    projectId: string,
+    range: StatsRange,
+    now: Date = new Date(),
+  ): Promise<ReleasesOverview> {
+    await this.projects.get(organizationId, projectId); // 404 if not in this organization
+
+    const window = resolveWindow(range, now);
+    const span = { from: window.from, to: window.to };
+    const [activity, newIssues] = await Promise.all([
+      this.repo.releaseActivity(projectId, span),
+      this.repo.newIssuesByRelease(projectId, span),
+    ]);
+
+    const newIssuesOf = new Map(
+      newIssues.map((row) => [row.release, row.count]),
+    );
+    return {
+      range,
+      from: window.from.toISOString(),
+      to: window.to.toISOString(),
+      releases: activity.map((row): ReleaseStat => ({
+        release: row.release,
+        events: row.events,
+        newIssues: newIssuesOf.get(row.release) ?? 0,
+        firstSeenAt: row.firstSeenAt.toISOString(),
+        lastSeenAt: row.lastSeenAt.toISOString(),
+      })),
     };
   }
 
