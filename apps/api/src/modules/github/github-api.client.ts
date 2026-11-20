@@ -6,8 +6,16 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { z } from 'zod';
 import type { GithubIssueLink, GithubRepo } from '@errwise/shared';
 import type { Env } from '../../config/env';
+import {
+  GithubReadError,
+  MAX_BLOB_BYTES,
+  classifyGithubFailure,
+  isSafeRepo,
+} from './github-read';
+import type { BlobText, RepoTree } from './github-read';
 
 const GITHUB_API = 'https://api.github.com';
 const GITHUB_OAUTH_TOKEN_URL = 'https://github.com/login/oauth/access_token';
@@ -15,6 +23,22 @@ const REQUEST_TIMEOUT_MS = 10_000;
 const TOKEN_SAFETY_MARGIN_MS = 5 * 60_000;
 const PER_PAGE = 100;
 const MAX_PAGES = 5;
+// Values that end up inside a request path are checked again here, whatever the caller did.
+const COMMIT_PATTERN = /^[0-9a-f]{7,64}$/;
+const FULL_SHA_PATTERN = /^[0-9a-f]{40}$|^[0-9a-f]{64}$/;
+const BINARY_SNIFF_BYTES = 8_000;
+
+const treeSchema = z.object({
+  truncated: z.boolean().optional(),
+  tree: z.array(
+    z.object({
+      path: z.string(),
+      type: z.string(),
+      sha: z.string(),
+      size: z.number().optional(),
+    }),
+  ),
+});
 
 interface RequestOptions {
   token: string;
@@ -152,6 +176,113 @@ export class GithubApiClient {
       method: 'POST',
       body: { body },
     });
+  }
+
+  // Reads below serve the optional source code feature. They throw GithubReadError, never
+  // a generic exception, because the caller must tell "no permission" from "rate limited".
+
+  /** Turns a commit hash, possibly a short one, into the full one. Also proves it exists. */
+  async resolveCommit(
+    installationId: string,
+    repo: string,
+    commit: string,
+  ): Promise<string> {
+    if (!isSafeRepo(repo) || !COMMIT_PATTERN.test(commit)) {
+      throw new GithubReadError('not_found');
+    }
+    const res = await this.read(
+      installationId,
+      `/repos/${repo}/commits/${commit}`,
+      'application/vnd.github.sha',
+    );
+    const sha = (await res.text()).trim().toLowerCase();
+    if (!FULL_SHA_PATTERN.test(sha)) throw new GithubReadError('unavailable');
+    return sha;
+  }
+
+  /** Every file of a commit. */
+  async getTree(
+    installationId: string,
+    repo: string,
+    commitSha: string,
+  ): Promise<RepoTree> {
+    if (!isSafeRepo(repo) || !FULL_SHA_PATTERN.test(commitSha)) {
+      throw new GithubReadError('not_found');
+    }
+    const res = await this.read(
+      installationId,
+      `/repos/${repo}/git/trees/${commitSha}?recursive=1`,
+      'application/vnd.github+json',
+    );
+    const parsed = treeSchema.safeParse(await res.json().catch(() => null));
+    if (!parsed.success) throw new GithubReadError('unavailable');
+
+    const files: RepoTree['files'] = new Map();
+    for (const entry of parsed.data.tree) {
+      if (entry.type === 'blob' && FULL_SHA_PATTERN.test(entry.sha)) {
+        files.set(entry.path, { sha: entry.sha, size: entry.size ?? 0 });
+      }
+    }
+    return { files, truncated: parsed.data.truncated === true };
+  }
+
+  /** The text of one file, by blob id. Binary and very large files are reported, not read. */
+  async getBlobText(
+    installationId: string,
+    repo: string,
+    blobSha: string,
+  ): Promise<BlobText> {
+    if (!isSafeRepo(repo) || !FULL_SHA_PATTERN.test(blobSha)) {
+      throw new GithubReadError('not_found');
+    }
+    const res = await this.read(
+      installationId,
+      `/repos/${repo}/git/blobs/${blobSha}`,
+      'application/vnd.github.raw+json',
+    );
+    const declared = Number(res.headers.get('content-length'));
+    if (declared > MAX_BLOB_BYTES) return { kind: 'too_large' };
+
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    if (bytes.byteLength > MAX_BLOB_BYTES) return { kind: 'too_large' };
+    // A NUL byte early in the file is how Git itself decides a file is binary.
+    if (bytes.subarray(0, BINARY_SNIFF_BYTES).includes(0)) {
+      return { kind: 'binary' };
+    }
+    return { kind: 'text', text: new TextDecoder('utf-8').decode(bytes) };
+  }
+
+  /** Never logs the path (it names the repository) or the content, only the status. */
+  private async read(
+    installationId: string,
+    path: string,
+    accept: string,
+  ): Promise<Response> {
+    let token: string;
+    try {
+      token = await this.getInstallationToken(installationId);
+    } catch {
+      throw new GithubReadError('unavailable');
+    }
+
+    let res: Response;
+    try {
+      res = await fetch(`${GITHUB_API}${path}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: accept,
+          'X-GitHub-Api-Version': '2022-11-28',
+          'User-Agent': 'errwise',
+        },
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      });
+    } catch {
+      throw new GithubReadError('unavailable');
+    }
+
+    if (res.ok) return res;
+    this.logger.warn(`GitHub read failed with ${res.status}`);
+    throw new GithubReadError(classifyGithubFailure(res.status, res.headers));
   }
 
   /** Short-lived installation token (about 1 hour), cached in memory. */
