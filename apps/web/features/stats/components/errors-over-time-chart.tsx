@@ -10,6 +10,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { bucketLabel } from "../bucket-label";
 
 const LEVELS = ["fatal", "error", "warning", "info"] as const;
 
@@ -20,28 +21,13 @@ const config = {
   info: { label: "Info", color: "var(--chart-3)" },
 } satisfies ChartConfig;
 
-// Buckets are aligned to UTC, so the labels are shown in UTC too: a bar never
-// disagrees with the boundary the server used.
-const hourFormat = new Intl.DateTimeFormat("en", {
-  hour: "2-digit",
-  minute: "2-digit",
-  hour12: false,
-  timeZone: "UTC",
-});
-const dayFormat = new Intl.DateTimeFormat("en", {
-  month: "short",
-  day: "numeric",
-  timeZone: "UTC",
-});
-
 interface Props {
   series: SeriesPoint[];
   range: StatsRange;
 }
 
 export function ErrorsOverTimeChart({ series, range }: Props) {
-  const format = range === "24h" ? hourFormat : dayFormat;
-  const label = (bucket: string) => format.format(new Date(bucket));
+  const label = bucketLabel(range);
 
   return (
     <ChartContainer config={config} className="h-64 w-full">

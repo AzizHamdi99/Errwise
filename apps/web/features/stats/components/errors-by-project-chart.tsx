@@ -14,6 +14,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { bucketLabel } from "../bucket-label";
 
 // The palette has five colours. The busiest four projects get one each and every
 // other project is merged into "Other", so the chart never needs a sixth hue.
@@ -25,18 +26,6 @@ const SLOT_COLORS = [
   "var(--chart-4)",
 ];
 const OTHER_KEY = "other";
-
-const hourFormat = new Intl.DateTimeFormat("en", {
-  hour: "2-digit",
-  minute: "2-digit",
-  hour12: false,
-  timeZone: "UTC",
-});
-const dayFormat = new Intl.DateTimeFormat("en", {
-  month: "short",
-  day: "numeric",
-  timeZone: "UTC",
-});
 
 interface Props {
   series: OrgSeriesPoint[];
@@ -76,8 +65,7 @@ export function ErrorsByProjectChart({ series, projects, range }: Props) {
     return row;
   });
 
-  const format = range === "24h" ? hourFormat : dayFormat;
-  const label = (bucket: string) => format.format(new Date(bucket));
+  const label = bucketLabel(range);
 
   return (
     <ChartContainer config={config} className="h-64 w-full">

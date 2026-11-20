@@ -1,5 +1,10 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import type { OrgOverview, ProjectOverview, StatsRange } from "@errwise/shared";
+import type {
+  IssueStats,
+  OrgOverview,
+  ProjectOverview,
+  StatsRange,
+} from "@errwise/shared";
 import { api } from "@/lib/api";
 
 export const statsRoot = (projectId: string) =>
@@ -33,6 +38,24 @@ export function useOrgOverview(orgId: string, range: StatsRange) {
     queryFn: () =>
       api<OrgOverview>(`/organizations/${orgId}/stats/overview?range=${range}`),
     enabled: !!orgId,
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useIssueStats(
+  orgId: string,
+  projectId: string,
+  issueId: string,
+  range: StatsRange,
+) {
+  return useQuery({
+    queryKey: [...statsRoot(projectId), "issue", issueId, range] as const,
+    queryFn: () =>
+      api<IssueStats>(
+        `/organizations/${orgId}/projects/${projectId}/issues/${issueId}/stats?range=${range}`,
+      ),
+    enabled: !!orgId && !!projectId && !!issueId,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
   });

@@ -19,6 +19,7 @@ import { IssueStatusBadge, issueStatusMeta } from "./issue-status-badge";
 import { IssueStatusControl } from "./issue-status-control";
 import { RecentEventsCard } from "./recent-events-card";
 import { AiAnalysisCard } from "@/features/analysis/components/ai-analysis-card";
+import { IssueActivityCard } from "@/features/stats/components/issue-activity-card";
 import { StackTraceWithSource } from "@/features/source-context/components/stack-trace-with-source";
 import { GithubIssueButton } from "@/features/github/components/github-issue-button";
 import { can } from "@/lib/permissions";
@@ -238,6 +239,11 @@ export function IssueDetailView() {
       {selected ? (
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="min-w-0 space-y-6">
+            <IssueActivityCard
+              orgId={orgId}
+              projectId={projectId}
+              issueId={issue.id}
+            />
             <AiAnalysisCard
               orgId={orgId}
               projectId={projectId}
