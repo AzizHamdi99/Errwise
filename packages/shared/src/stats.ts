@@ -71,3 +71,41 @@ export interface ProjectOverview {
   environments: EnvironmentCount[];
   topIssues: TopIssue[];
 }
+
+/** The org overview takes the same range as the project overview. */
+export const orgOverviewQuerySchema = projectOverviewQuerySchema;
+export type OrgOverviewQuery = ProjectOverviewQuery;
+
+export interface OrgProjectStat {
+  id: string;
+  name: string;
+  /** Events received in the range. */
+  events: number;
+  /** Issues that are unresolved right now. */
+  unresolved: number;
+}
+
+/** One bucket of the org chart: events per project id. Projects without events are absent. */
+export interface OrgSeriesPoint {
+  /** Start of the bucket, ISO 8601 UTC. */
+  bucket: string;
+  byProject: Record<string, number>;
+}
+
+export interface OrgTopIssue extends TopIssue {
+  projectId: string;
+  projectName: string;
+}
+
+export interface OrgOverview {
+  range: StatsRange;
+  /** Start (inclusive) and end (exclusive) of the range, ISO 8601 UTC. */
+  from: string;
+  to: string;
+  /** Summed over every active project of the organization. */
+  cards: OverviewCards;
+  /** Every active project, busiest first, including those with no events. */
+  projects: OrgProjectStat[];
+  series: OrgSeriesPoint[];
+  topIssues: OrgTopIssue[];
+}
