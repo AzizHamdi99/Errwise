@@ -50,6 +50,8 @@ const MIN_MATCHING_SEGMENTS = 2;
 export function framePathSegments(file: string): string[] {
   let path =
     file.length > MAX_PATH_LENGTH ? file.slice(-MAX_PATH_LENGTH) : file;
+  // A query or fragment is not part of the file. (So a file whose name contains ? or # is
+  // never resolved: accepted, they are very rare.)
   path = path.replace(/[?#].*$/, '');
   try {
     path = decodeURIComponent(path);
