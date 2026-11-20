@@ -19,7 +19,7 @@ export function OrganizationsIndex() {
   useEffect(() => {
     if (!orgs?.length) return;
     const target = orgs.find((o) => o.id === getLastOrgId()) ?? orgs[0];
-    router.replace(`/organizations/${target.id}/projects`);
+    router.replace(`/organizations/${target.id}`);
   }, [orgs, router]);
 
   if (error) {

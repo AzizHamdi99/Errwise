@@ -1,13 +1,14 @@
 import { Module } from '@nestjs/common';
 import { MembershipsModule } from '../memberships/memberships.module';
 import { ProjectsModule } from '../projects/projects.module';
+import { OrgSubscriptionsController } from './org-subscriptions.controller';
 import { SubscriptionsController } from './subscriptions.controller';
 import { SubscriptionsRepository } from './subscriptions.repository';
 import { SubscriptionsService } from './subscriptions.service';
 
 @Module({
   imports: [MembershipsModule, ProjectsModule],
-  controllers: [SubscriptionsController],
+  controllers: [SubscriptionsController, OrgSubscriptionsController],
   providers: [SubscriptionsService, SubscriptionsRepository],
   exports: [SubscriptionsRepository],
 })

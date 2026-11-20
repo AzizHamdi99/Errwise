@@ -1,9 +1,8 @@
 "use client";
 
-import { Bell, BellOff } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSubscription, useUpdateSubscription } from "../queries";
+import { NotifyButton } from "./notify-button";
 
 interface Props {
   orgId: string;
@@ -21,25 +20,11 @@ export function NotifyToggle({ orgId, projectId }: Props) {
 
   return (
     <div className="flex flex-col items-end gap-1">
-      <Button
-        variant={on ? "secondary" : "outline"}
-        size="sm"
-        aria-pressed={on}
-        disabled={update.isPending}
-        onClick={() => update.mutate({ emailNewIssues: !on })}
-        title={
-          on
-            ? "You get an email for each new issue. Click to turn off."
-            : "Get an email when a new issue appears in this project."
-        }
-      >
-        {on ? (
-          <Bell aria-hidden className="text-primary" />
-        ) : (
-          <BellOff aria-hidden />
-        )}
-        {on ? "Notifications on" : "Notify me"}
-      </Button>
+      <NotifyButton
+        on={on}
+        pending={update.isPending}
+        onToggle={() => update.mutate({ emailNewIssues: !on })}
+      />
       {update.isError ? (
         <p role="alert" className="text-xs text-destructive">
           Couldn&apos;t update. Try again.

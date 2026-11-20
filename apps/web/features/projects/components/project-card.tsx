@@ -38,7 +38,7 @@ export function ProjectCard({ project, canEdit }: Props) {
 
       <h3 className="mt-4 text-base font-medium">
         <Link
-          href={`${base}/issues`}
+          href={`${base}/overview`}
           className="outline-none after:absolute after:inset-0 after:rounded-xl focus-visible:after:ring-2 focus-visible:after:ring-ring"
         >
           {project.name}

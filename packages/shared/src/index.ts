@@ -12,3 +12,4 @@ export * from "./github";
 export * from "./analysis";
 export * from "./stack-trace";
 export * from "./source-context";
+export * from "./stats";

@@ -5,7 +5,9 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const TABS = [
+  { label: "Overview", segment: "overview" },
   { label: "Issues", segment: "issues" },
+  { label: "Releases", segment: "releases" },
   { label: "API keys", segment: "api-keys" },
   { label: "Integrations", segment: "integrations" },
   { label: "Settings", segment: "settings" },

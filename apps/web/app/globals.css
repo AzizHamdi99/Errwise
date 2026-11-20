@@ -68,6 +68,12 @@
   --border: #e4e6ec;
   --input: #e4e6ec;
   --ring: #6240e8;
+  /* Categorical chart palette: brand purple first, then hues that stay apart for colour-blind viewers. */
+  --chart-1: #6240e8;
+  --chart-2: #0284c7;
+  --chart-3: #059669;
+  --chart-4: #d97706;
+  --chart-5: #e11d48;
 }
 
 .dark {
@@ -89,6 +95,11 @@
   --border: #232836;
   --input: #232836;
   --ring: #7b57f2;
+  --chart-1: #7b57f2;
+  --chart-2: #38bdf8;
+  --chart-3: #34d399;
+  --chart-4: #fbbf24;
+  --chart-5: #f5586e;
 }
 
 @layer base {

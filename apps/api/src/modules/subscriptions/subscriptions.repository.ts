@@ -12,6 +12,19 @@ export class SubscriptionsRepository {
     });
   }
 
+  /**
+   * One user's subscriptions in one organization. Filtered through the project
+   * relation, so projects of other organizations and deleted projects never appear.
+   */
+  listForUserInOrganization(
+    userId: string,
+    organizationId: string,
+  ): Promise<ProjectSubscription[]> {
+    return this.prisma.projectSubscription.findMany({
+      where: { userId, project: { organizationId, deletedAt: null } },
+    });
+  }
+
   upsert(
     userId: string,
     projectId: string,
