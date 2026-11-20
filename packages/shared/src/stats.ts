@@ -173,3 +173,30 @@ export interface ReleasesOverview {
   /** Most recently seen first, at most 20. */
   releases: ReleaseStat[];
 }
+
+export interface UsageProject {
+  id: string;
+  name: string;
+  /** Events received over the last 30 days. */
+  events: number;
+}
+
+export interface AiUsageStatus {
+  /** AI analyses started today (UTC). A failed call gives its slot back. */
+  usedToday: number;
+  /** The organization's daily allowance. The day resets at 00:00 UTC. */
+  dailyLimit: number;
+}
+
+export interface OrgUsage {
+  /** The last 30 days, start (inclusive) and end (exclusive), ISO 8601 UTC. */
+  from: string;
+  to: string;
+  totalEvents: number;
+  /** Every active project, busiest first, including those with no events. */
+  projects: UsageProject[];
+  /** Events per day split by project, one point per day, zero-filled. */
+  series: OrgSeriesPoint[];
+  /** Null when the AI analysis feature is not configured, so the page can hide it. */
+  ai: AiUsageStatus | null;
+}
