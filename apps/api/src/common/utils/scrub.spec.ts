@@ -1,5 +1,5 @@
 import type { EventInput } from '@errwise/shared';
-import { scrubEvent } from './scrub';
+import { scrubEvent, scrubText } from './scrub';
 
 function event(overrides: Partial<EventInput> = {}): EventInput {
   return {
@@ -167,5 +167,21 @@ describe('scrubEvent', () => {
         expect(performance.now() - start).toBeLessThan(500);
       }
     });
+  });
+});
+
+describe('scrubText', () => {
+  it('scrubs free text such as a line of source code', () => {
+    const out = scrubText(
+      "const owner = 'dev@acme.io'; // Bearer abcdef1234567890xyz",
+    );
+    expect(out).not.toContain('dev@acme.io');
+    expect(out).not.toContain('abcdef1234567890xyz');
+    expect(out).toContain('[email]');
+  });
+
+  it('leaves ordinary code alone', () => {
+    const code = '  47 | return user.name;';
+    expect(scrubText(code)).toBe(code);
   });
 });

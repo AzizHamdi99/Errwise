@@ -6,11 +6,20 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { AnalysisResult, PublicIssueAnalysis } from '@errwise/shared';
+import type {
+  AnalysisResult,
+  PublicIssueAnalysis,
+  SourceSnippet,
+} from '@errwise/shared';
 import type { Env } from '../../config/env';
 import { ProjectsService } from '../projects/projects.service';
+import { SourceContextService } from '../source-context/source-context.service';
 import { AiClient } from './ai.client';
-import { buildAnalysisInput, hashAnalysisInput } from './analysis-input';
+import {
+  buildAnalysisInput,
+  buildSourceSnippets,
+  hashAnalysisInput,
+} from './analysis-input';
 import { toPublicAnalysis } from './analysis.mapper';
 import { AnalysisRepository } from './analysis.repository';
 
@@ -31,6 +40,7 @@ export class AnalysisService {
     private readonly repo: AnalysisRepository,
     private readonly projects: ProjectsService,
     private readonly ai: AiClient,
+    private readonly sourceContext: SourceContextService,
   ) {
     this.dailyLimit = config.get('AI_DAILY_LIMIT_PER_ORG', { infer: true });
   }
@@ -60,7 +70,13 @@ export class AnalysisService {
     const event = await this.repo.latestEvent(issue.id);
     if (!event) throw new NotFoundException('Issue has no events');
 
-    const input = buildAnalysisInput(issue, event);
+    const snippets = await this.sourceSnippets(
+      organizationId,
+      projectId,
+      issueId,
+      event.id,
+    );
+    const input = buildAnalysisInput(issue, event, snippets);
     const inputHash = hashAnalysisInput(input);
 
     // Same input as before: free, and it works even if the AI service is down.
@@ -93,9 +109,41 @@ export class AnalysisService {
       inputHash,
       promptVersion: result.promptVersion,
       model: result.model,
-      result,
+      result: {
+        ...result,
+        sourceFiles: (input.sourceContext ?? []).map(
+          (s) => `${s.file}:${s.line}`,
+        ),
+      },
     });
     return toPublicAnalysis(row, false);
+  }
+
+  /**
+   * The code around the failing frames, when the project opted in. Best effort: the
+   * analysis is worth having without it, so any problem (GitHub down, no permission, a
+   * missing commit) just means "no code this time". The source service itself answers
+   * "disabled" without calling GitHub when the owner has not turned the feature on, so a
+   * project that did not opt in never has its code read, let alone sent.
+   */
+  private async sourceSnippets(
+    organizationId: string,
+    projectId: string,
+    issueId: string,
+    eventId: string,
+  ): Promise<SourceSnippet[]> {
+    try {
+      const source = await this.sourceContext.get(
+        organizationId,
+        projectId,
+        issueId,
+        eventId,
+      );
+      return buildSourceSnippets(source);
+    } catch {
+      this.logger.warn('Source code was not available for an analysis');
+      return [];
+    }
   }
 
   private async getIssueOrThrow(projectId: string, issueId: string) {
