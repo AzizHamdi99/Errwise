@@ -1,3 +1,11 @@
+/**
+ * Parses a Node.js stack trace. Pure TypeScript, no Node APIs, so the dashboard and the
+ * API run the exact same code: a frame index means the same thing on both sides.
+ *
+ * Not used for fingerprinting. The ingestion fingerprint has its own parser on purpose,
+ * because changing it would regroup existing issues.
+ */
+
 export interface StackFrame {
   fn: string | null;
   file: string;
