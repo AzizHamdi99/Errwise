@@ -23,6 +23,7 @@ import { MessagingModule } from './modules/messaging/messaging.module';
 import { GithubModule } from './modules/github/github.module';
 import { AnalysisModule } from './modules/analysis/analysis.module';
 import { SourceContextModule } from './modules/source-context/source-context.module';
+import { StatsModule } from './modules/stats/stats.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { SourceContextModule } from './modules/source-context/source-context.mod
     GithubModule,
     AnalysisModule,
     SourceContextModule,
+    StatsModule,
   ],
   controllers: [AppController],
   providers: [
