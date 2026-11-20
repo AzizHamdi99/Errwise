@@ -239,6 +239,7 @@ export interface StoreEventData {
   platform: string;
   environment: string;
   release?: string;
+  commitSha?: string;
   sdk?: string;
   context?: Prisma.InputJsonObject;
   timestamp: Date;
@@ -347,6 +348,7 @@ export class IngestionRepository {
           platform: data.platform,
           environment: data.environment,
           release: data.release,
+          commitSha: data.commitSha,
           sdk: data.sdk,
           context: data.context,
           timestamp: data.timestamp,
