@@ -2,6 +2,7 @@
 
 import { ProjectPageHeader } from "@/features/projects/components/project-page-header";
 import { useCurrentProject } from "@/features/projects/use-current-project";
+import { SourceContextCard } from "@/features/source-context/components/source-context-card";
 import { can } from "@/lib/permissions";
 import { GithubIntegrationCard } from "./github-integration-card";
 
@@ -23,6 +24,13 @@ export function ProjectIntegrationsView() {
           orgId={org.id}
           projectId={project.id}
           canManage={can(org.role, "github.manage")}
+        />
+        <SourceContextCard
+          key={`source-${project.id}`}
+          orgId={org.id}
+          projectId={project.id}
+          enabled={project.sourceContextEnabled}
+          canManage={can(org.role, "project.write")}
         />
       </div>
     </div>

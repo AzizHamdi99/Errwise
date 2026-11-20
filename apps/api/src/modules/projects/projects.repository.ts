@@ -14,6 +14,7 @@ export interface UpdateProjectData {
   name?: string;
   platform?: string;
   retentionDays?: number;
+  sourceContextEnabled?: boolean;
 }
 
 @Injectable()

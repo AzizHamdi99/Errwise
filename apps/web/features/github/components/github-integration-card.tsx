@@ -100,7 +100,8 @@ function NotConnected({ orgId, projectId, canManage }: Props) {
     <div className="flex flex-col items-start gap-3">
       <p className="text-sm text-muted-foreground">
         You will be sent to GitHub to choose which repositories Errwise can use.
-        Only issue access is requested.
+        Errwise asks for issue access, and read access to code for the optional
+        source code feature.
       </p>
       <Button
         onClick={() =>

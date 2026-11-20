@@ -120,6 +120,7 @@ The SDK must never throw into, block, or slow the host app. `captureException` n
 
 - GitHub is the source of truth for who fixes what. Errwise only syncs state: issue creation, `closed`/`reopened` webhooks into `githubState`, and reopen + comment on regression.
 - Creating a GitHub issue takes an atomic claim (`githubIssueClaimedAt`, 60 s TTL). Webhooks are deduped by delivery id (`GithubWebhookDelivery`). GitHub sync for regressions never throws.
+- Source code on the issue page (ADR-005): opt-in per project (`Project.sourceContextEnabled`, owner only), read from GitHub on demand at the deployed `Event.commitSha`, cached in memory only, never stored. Frame paths are untrusted: only read paths that exist in the repository tree. Needs the GitHub App permission Contents: Read-only.
 - The install flow uses a signed, short-lived `state`, re-checks the owner role, and verifies the user's access to the installation. See `docs/adr/Github integration.md`.
 
 ## AI analysis (`modules/analysis`, `apps/ai`)

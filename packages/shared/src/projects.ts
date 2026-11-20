@@ -19,6 +19,8 @@ export const updateProjectSchema = z
     name: name.optional(),
     platform: platform.optional(),
     retentionDays: retentionDays.optional(),
+    /** Owner opt-in: read the code around stack frames from the connected GitHub repo. */
+    sourceContextEnabled: z.boolean().optional(),
   })
   .refine((v) => Object.values(v).some((x) => x !== undefined), {
     message: "Provide at least one field to update",
@@ -34,5 +36,6 @@ export interface PublicProject {
   slug: string;
   platform: string;
   retentionDays: number;
+  sourceContextEnabled: boolean;
   createdAt: string;
 }
