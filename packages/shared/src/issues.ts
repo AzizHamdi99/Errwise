@@ -52,6 +52,8 @@ export interface PublicEvent {
   platform: string;
   environment: string;
   release: string | null;
+  /** The deployed Git commit, lowercase hex, when the SDK or the release provided one. */
+  commitSha: string | null;
   sdk: string | null;
   context: Record<string, unknown> | null;
   timestamp: string;

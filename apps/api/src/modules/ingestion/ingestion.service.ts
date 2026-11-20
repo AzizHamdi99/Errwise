@@ -9,6 +9,7 @@ import {
 } from './fingerprint';
 import { IngestionRepository, StoreEventData } from './ingestion.repository';
 import { scrubEvent } from '../../common/utils/scrub';
+import { resolveCommitSha } from './commit-sha';
 
 import {
   IssueAlertDispatcher,
@@ -148,6 +149,7 @@ export class IngestionService {
       platform: event.platform,
       environment: event.environment,
       release: event.release,
+      commitSha: resolveCommitSha(event.commitSha, event.release),
       sdk: event.sdk,
       context: clean.context as Prisma.InputJsonObject | undefined,
       timestamp: resolveTimestamp(event.timestamp, now),

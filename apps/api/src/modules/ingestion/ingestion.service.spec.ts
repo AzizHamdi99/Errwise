@@ -58,6 +58,26 @@ describe('IngestionService scrubbing', () => {
     expect(JSON.stringify(stored)).not.toMatch(/bob@x\.com|hunter2/);
   });
 
+  it('stores the commit from the SDK, or one found in the release', async () => {
+    await service.ingest(apiKey, [
+      event({ commitSha: 'abcdef1234567' }),
+      event({
+        eventId: '0198a2b4-7c1e-7a3b-8f00-1234567890ac',
+        release: '9fceb02d0ae598e95dc970b74767f19372d61af8',
+      }),
+      event({
+        eventId: '0198a2b4-7c1e-7a3b-8f00-1234567890ad',
+        release: '1.4.0',
+      }),
+    ]);
+
+    expect(stored.map((e) => e.commitSha)).toEqual([
+      'abcdef1234567',
+      '9fceb02d0ae598e95dc970b74767f19372d61af8',
+      undefined,
+    ]);
+  });
+
   it('computes the fingerprint from the original message, so scrubbing never regroups issues', async () => {
     const message = 'User bob@x.com not found';
     await service.ingest(apiKey, event({ message }));

@@ -170,6 +170,7 @@ model Event {
   platform    String   @default("node")
   environment String   @default("production")
   release     String?
+  commitSha   String?
   sdk         String?
   context     Json?
   timestamp   DateTime @db.Timestamptz(3)

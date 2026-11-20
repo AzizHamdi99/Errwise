@@ -35,6 +35,7 @@ export function EventDetailsCard({ event }: { event: PublicEvent }) {
   const rows: [string, string][] = [
     ["Environment", display(event.environment)],
     ["Release", event.release ?? "none"],
+    ["Commit", event.commitSha ? event.commitSha.slice(0, 7) : "none"],
     ["Level", display(event.level)],
     ["Platform", display(event.platform)],
     ["SDK", display(event.sdk)],
@@ -65,11 +66,16 @@ export function EventDetailsCard({ event }: { event: PublicEvent }) {
           >
             <dt className="text-muted-foreground">{label}</dt>
             <dd
-              className="min-w-0 text-right font-medium wrap-break"
+              className={cn(
+                "min-w-0 text-right font-medium wrap-break",
+                label === "Commit" && event.commitSha && "font-mono",
+              )}
               title={
                 label === "Time"
                   ? new Date(event.timestamp).toLocaleString()
-                  : undefined
+                  : label === "Commit"
+                    ? (event.commitSha ?? undefined)
+                    : undefined
               }
             >
               {value}

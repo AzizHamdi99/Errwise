@@ -45,6 +45,7 @@ export function toPublicEvent(event: Event): PublicEvent {
     platform: event.platform,
     environment: event.environment,
     release: event.release,
+    commitSha: event.commitSha,
     sdk: event.sdk,
     context: event.context as Record<string, unknown> | null,
     timestamp: event.timestamp.toISOString(),

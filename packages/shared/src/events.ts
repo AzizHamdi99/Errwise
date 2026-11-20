@@ -19,6 +19,15 @@ export const eventSchema = z.object({
   timestamp: z.iso.datetime({ offset: true }).optional(),
   environment: z.string().trim().min(1).max(64).default("production"),
   release: z.string().trim().min(1).max(128).optional(),
+  // The deployed commit, used to show the code around a stack frame. It is a bonus
+  // field: a malformed value is ignored and must never cause an error to be dropped.
+  commitSha: z
+    .string()
+    .trim()
+    .regex(/^[0-9a-fA-F]{7,64}$/)
+    .transform((value) => value.toLowerCase())
+    .optional()
+    .catch(undefined),
   platform: z.string().trim().min(1).max(32).default("node"),
   sdk: z.string().trim().min(1).max(64).optional(),
   context: z
