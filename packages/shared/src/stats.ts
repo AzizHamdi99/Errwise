@@ -109,3 +109,37 @@ export interface OrgOverview {
   series: OrgSeriesPoint[];
   topIssues: OrgTopIssue[];
 }
+
+/** An issue page shows a longer window by default than the overviews: it is a trend, not a status. */
+export const DEFAULT_ISSUE_STATS_RANGE: StatsRange = "14d";
+
+export const issueStatsQuerySchema = z.object({
+  range: statsRangeSchema.default(DEFAULT_ISSUE_STATS_RANGE),
+});
+
+export type IssueStatsQuery = z.infer<typeof issueStatsQuerySchema>;
+
+export interface CountPoint {
+  /** Start of the bucket, ISO 8601 UTC. */
+  bucket: string;
+  count: number;
+}
+
+export interface ReleaseCount {
+  /** Null groups the events that were sent without a release. */
+  release: string | null;
+  count: number;
+}
+
+export interface IssueStats {
+  range: StatsRange;
+  /** Start (inclusive) and end (exclusive) of the range, ISO 8601 UTC. */
+  from: string;
+  to: string;
+  /** Events of this issue in the range. */
+  total: number;
+  /** Events per bucket. Empty buckets are present with zero. */
+  series: CountPoint[];
+  environments: EnvironmentCount[];
+  releases: ReleaseCount[];
+}
