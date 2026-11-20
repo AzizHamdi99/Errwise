@@ -115,6 +115,7 @@ In queue mode the worker also needs the `GITHUB_*` variables, because it loads t
 ## 7. GitHub App settings
 
 - Repository permission **Issues: Read & write**.
+- Repository permission **Contents: Read-only**, for the optional source code feature (ADR-005). Add it in GitHub, under Settings, Developer settings, GitHub Apps, your app, Permissions & events. Every existing installation then has to **accept** the new permission at `github.com/settings/installations`; until it does, reading code fails with `no_permission` and nothing else is affected.
 - **Subscribe to events: Issues**. After a permission change, the installation owner must accept it at `github.com/settings/installations`, otherwise no events are sent.
 - Webhook URL: `https://<api>/github/webhook` in production. An app has **one** webhook URL, so for local work point it to a smee.io channel (`npx smee-client --url <channel> --target http://localhost:4000/github/webhook`) or create a second "Errwise Dev" app.
 
@@ -134,6 +135,7 @@ In queue mode the worker also needs the `GITHUB_*` variables, because it loads t
 | 500 in production                    | Migration not applied on Neon                                            | `yarn db:migrate:prod`, then redeploy                                                               |
 | No `issues` delivery at all          | Event not subscribed, or new permission not accepted                     | Subscribe to Issues, accept the permission on the installation                                      |
 | 200 but nothing changes              | No match on repo + installation id + issue number                        | Compare the payload with `Project.githubRepo`, `githubInstallationId` and `Issue.githubIssueNumber` |
+| Source code says "accept the permission"  | Contents permission added after the app was installed                    | The installation owner accepts it at `github.com/settings/installations`                            |
 | Redelivery returns `duplicate: true` | A redelivery reuses the same delivery ID                                 | Expected. Trigger a new event to test again.                                                        |
 
 ## 10. Test checklist
