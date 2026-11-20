@@ -20,6 +20,21 @@ export class SubscriptionsService {
     return { projectId, emailNewIssues: sub?.emailNewIssues ?? false }; // no row = not subscribed
   }
 
+  /** Projects without a row are not listed: the client reads a missing project as "not subscribed". */
+  async listMine(
+    organizationId: string,
+    userId: string,
+  ): Promise<PublicSubscription[]> {
+    const rows = await this.repo.listForUserInOrganization(
+      userId,
+      organizationId,
+    );
+    return rows.map((row) => ({
+      projectId: row.projectId,
+      emailNewIssues: row.emailNewIssues,
+    }));
+  }
+
   async update(
     organizationId: string,
     projectId: string,
