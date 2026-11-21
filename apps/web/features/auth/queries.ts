@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   LoginInput,
+  ResetPasswordInput,
   PublicUser,
   RegisterInput,
   RegisterResult,
@@ -67,6 +68,20 @@ export const useResendVerification = () =>
         method: "POST",
         body: { email },
       }),
+  });
+
+/** Always succeeds for a valid address: the answer never says whether it has an account. */
+export const useForgotPassword = () =>
+  useMutation({
+    mutationFn: (email: string) =>
+      api<void>("/auth/forgot-password", { method: "POST", body: { email } }),
+  });
+
+/** Does not sign in: every session is revoked, the user logs in with the new password. */
+export const useResetPassword = () =>
+  useMutation({
+    mutationFn: (input: ResetPasswordInput) =>
+      api<void>("/auth/reset-password", { method: "POST", body: input }),
   });
 
 export const useMe = () =>

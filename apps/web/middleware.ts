@@ -5,8 +5,16 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get("ew_access")?.value;
   const pathname = request.nextUrl.pathname;
 
-  // /verify-email is opened from a link in an email, usually without a session.
-  const publicRoutes = ["/", "/login", "/register", "/verify-email"];
+  // /verify-email and /reset-password are opened from a link in an email, usually without a
+  // session. Someone who forgot their password is not signed in either.
+  const publicRoutes = [
+    "/",
+    "/login",
+    "/register",
+    "/verify-email",
+    "/forgot-password",
+    "/reset-password",
+  ];
 
   const isPublicRoute = publicRoutes.includes(pathname);
 

@@ -23,12 +23,25 @@ model User {
   memberships       Membership[]
   subscriptions     ProjectSubscription[]
   emailVerification EmailVerification?
+  passwordReset     PasswordReset?
 }
 
 /// The pending email verification of a user. userId is the primary key, so there is at most one
 /// link at a time and a new link replaces the old one. Only the sha256 of the token is stored,
 /// like invitations and refresh tokens. The row is deleted when the link is used.
 model EmailVerification {
+  userId    String   @id @db.Uuid
+  tokenHash String   @unique
+  expiresAt DateTime @db.Timestamptz(3)
+  /// When the email was last sent: the resend cooldown is measured from it.
+  sentAt    DateTime @db.Timestamptz(3)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// The pending password reset link of a user. Same shape as EmailVerification: userId is the
+/// primary key, so a new link replaces the old one, and only the sha256 of the token is stored.
+/// The row is deleted when the link is used.
+model PasswordReset {
   userId    String   @id @db.Uuid
   tokenHash String   @unique
   expiresAt DateTime @db.Timestamptz(3)

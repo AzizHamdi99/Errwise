@@ -2,10 +2,12 @@ import { z } from "zod";
 
 const email = z.string().trim().toLowerCase().email().max(254);
 
+// bcrypt only uses the first 72 bytes, so we cap the length there
+export const passwordSchema = z.string().min(8).max(72);
+
 export const registerSchema = z.object({
   email,
-  // bcrypt only uses the first 72 bytes, so we cap the length there
-  password: z.string().min(8).max(72),
+  password: passwordSchema,
   name: z.string().trim().min(1).max(80).optional(),
 });
 
@@ -21,10 +23,20 @@ export const verifyEmailSchema = z.object({
 
 export const resendVerificationSchema = z.object({ email });
 
+export const forgotPasswordSchema = z.object({ email });
+
+/** Same token format as the verification link. The new password follows the register rules. */
+export const resetPasswordSchema = z.object({
+  token: z.string().trim().min(20).max(200),
+  password: passwordSchema,
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
 export type ResendVerificationInput = z.infer<typeof resendVerificationSchema>;
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 
 /** The `code` of the 403 that login answers when the email was never verified. */
 export const EMAIL_NOT_VERIFIED = "EMAIL_NOT_VERIFIED";
