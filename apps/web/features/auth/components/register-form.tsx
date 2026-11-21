@@ -3,11 +3,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { registerSchema } from "@errwise/shared";
-import type { RegisterInput } from "@errwise/shared";
+import type { RegisterInput, RegisterResult } from "@errwise/shared";
 import { Field } from "@/components/shared/field";
 import { PasswordInput } from "@/components/shared/password-input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -15,20 +15,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ApiError, getErrorMessage } from "@/lib/api";
 import { applyFieldErrors } from "@/lib/forms";
-import { safeNext } from "@/lib/safe-redirect";
 import { useRegister } from "../queries";
 import { PasswordStrength } from "./password-strength";
 import { authHref } from "@/lib/auth-links";
+import { CheckInbox } from "./check-inbox";
 import { GoogleButton, OrDivider } from "./google-button";
 
 export function RegisterForm() {
-  const router = useRouter();
   const params = useSearchParams();
   const rawNext = params.get("next");
   const invitedEmail = params.get("email") ?? "";
 
   const registerUser = useRegister();
   const [formError, setFormError] = useState<string | null>(null);
+  // Set once the account exists. Registering does not sign in: the email has to be verified first.
+  const [registered, setRegistered] = useState<RegisterResult | null>(null);
 
   const {
     register,
@@ -44,7 +45,7 @@ export function RegisterForm() {
   const onSubmit = handleSubmit((values) => {
     setFormError(null);
     registerUser.mutate(values, {
-      onSuccess: () => router.replace(safeNext(rawNext, "/onboarding")),
+      onSuccess: setRegistered,
       onError: (error) => {
         if (applyFieldErrors(error, setError)) return;
         if (error instanceof ApiError && error.status === 409) {
@@ -58,8 +59,30 @@ export function RegisterForm() {
 
   const loginHref = authHref("/login", { next: rawNext, email: invitedEmail });
 
+  if (registered) {
+    return (
+      <CheckInbox
+        email={registered.email}
+        emailSent={registered.verificationEmailSent}
+        loginHref={authHref("/login", {
+          next: rawNext,
+          email: registered.email,
+        })}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
+      <header className="space-y-2">
+        <h1 className="text-3xl font-medium tracking-tight">
+          Create your account
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Start collecting errors with your team.
+        </p>
+      </header>
+
       {formError ? (
         <Alert variant="destructive" role="alert">
           <AlertDescription>{formError}</AlertDescription>
