@@ -43,6 +43,7 @@ export class MembershipsController {
       membership.organizationId,
       userId,
       body.role,
+      membership.userId,
     );
   }
 

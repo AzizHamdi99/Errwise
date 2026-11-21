@@ -13,6 +13,7 @@ import type {
   GithubRepo,
 } from '@errwise/shared';
 import type { Env } from '../../config/env';
+import { AuditService } from '../audit/audit.service';
 import { MembershipsService } from '../memberships/memberships.service';
 import type { OrgMembership } from '../memberships/memberships.types';
 import { GithubApiClient } from './github-api.client';
@@ -29,6 +30,7 @@ export class GithubIntegrationService {
     private readonly github: GithubApiClient,
     private readonly states: GithubStateService,
     private readonly memberships: MembershipsService,
+    private readonly audit: AuditService,
   ) {
     this.appSlug = config.get('GITHUB_APP_SLUG', { infer: true });
   }
@@ -98,6 +100,15 @@ export class GithubIntegrationService {
     }
 
     await this.repo.saveInstallation(state.projectId, input.installationId);
+    await this.audit.record({
+      organizationId: state.organizationId,
+      actorId: userId,
+      action: 'github.connected',
+      targetType: 'project',
+      targetId: state.projectId,
+      projectId: state.projectId,
+      metadata: { installationId: input.installationId },
+    });
     return {
       organizationId: state.organizationId,
       projectId: state.projectId,
@@ -116,6 +127,7 @@ export class GithubIntegrationService {
     organizationId: string,
     projectId: string,
     repoFullName: string,
+    actorId: string,
   ): Promise<GithubConnection> {
     const project = await this.requireProject(organizationId, projectId);
     const repos = await this.github.listRepositories(
@@ -133,13 +145,36 @@ export class GithubIntegrationService {
     }
 
     await this.repo.saveRepo(projectId, match.fullName);
+    await this.audit.record({
+      organizationId,
+      actorId,
+      action: 'github.repo_selected',
+      targetType: 'project',
+      targetId: projectId,
+      projectId,
+      metadata: { repo: match.fullName, previousRepo: project.githubRepo },
+    });
     return { installed: true, repo: match.fullName };
   }
 
   /** Unlinks the project. Existing GitHub issue links on Errwise issues are kept. */
-  async disconnect(organizationId: string, projectId: string): Promise<void> {
-    await this.requireProject(organizationId, projectId);
+  async disconnect(
+    organizationId: string,
+    projectId: string,
+    actorId: string,
+  ): Promise<void> {
+    const project = await this.requireProject(organizationId, projectId);
     await this.repo.disconnect(projectId);
+    // Disconnecting also turns source code off (GithubRepository.disconnect).
+    await this.audit.record({
+      organizationId,
+      actorId,
+      action: 'github.disconnected',
+      targetType: 'project',
+      targetId: projectId,
+      projectId,
+      metadata: { repo: project.githubRepo },
+    });
   }
 
   private async requireProject(

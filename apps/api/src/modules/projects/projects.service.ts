@@ -10,14 +10,28 @@ import type {
   UpdateProjectInput,
 } from '@errwise/shared';
 import { randomSlugSuffix, slugify } from '../../common/utils/slug';
+import { AuditService } from '../audit/audit.service';
 import { toPublicProject } from './projects.mapper';
 import { ProjectsRepository } from './projects.repository';
 
 const MAX_SLUG_ATTEMPTS = 5;
 
+/** The settings that make a "project.updated" entry. Source code has its own events. */
+const UPDATABLE_FIELDS = ['name', 'platform', 'retentionDays'] as const;
+
+interface ProjectFields {
+  name: string;
+  platform: string;
+  retentionDays: number;
+  sourceContextEnabled: boolean;
+}
+
 @Injectable()
 export class ProjectsService {
-  constructor(private readonly repo: ProjectsRepository) {}
+  constructor(
+    private readonly repo: ProjectsRepository,
+    private readonly audit: AuditService,
+  ) {}
 
   async create(
     organizationId: string,
@@ -39,6 +53,15 @@ export class ProjectsService {
           },
           userId,
         );
+        await this.audit.record({
+          organizationId,
+          actorId: userId,
+          action: 'project.created',
+          targetType: 'project',
+          targetId: project.id,
+          projectId: project.id,
+          metadata: { name: project.name, platform: project.platform },
+        });
         return toPublicProject(project);
       } catch (e) {
         const taken =
@@ -63,15 +86,71 @@ export class ProjectsService {
     organizationId: string,
     id: string,
     input: UpdateProjectInput,
+    actorId: string,
   ): Promise<PublicProject> {
-    await this.getOrThrow(organizationId, id); // 404 if missing, deleted or another tenant's
+    // 404 if missing, deleted or in another organization
+    const before = await this.getOrThrow(organizationId, id);
     const project = await this.repo.update(id, input);
+    await this.recordUpdate(organizationId, actorId, before, project);
     return toPublicProject(project);
   }
 
-  async remove(organizationId: string, id: string): Promise<void> {
-    await this.getOrThrow(organizationId, id);
+  async remove(
+    organizationId: string,
+    id: string,
+    actorId: string,
+  ): Promise<void> {
+    const project = await this.getOrThrow(organizationId, id);
     await this.repo.softDelete(id);
+    await this.audit.record({
+      organizationId,
+      actorId,
+      action: 'project.deleted',
+      targetType: 'project',
+      targetId: id,
+      projectId: id,
+      metadata: { name: project.name },
+    });
+  }
+
+  /**
+   * Turning source code on or off is its own event: it decides whether code leaves for the AI
+   * (ADR-005). Other changes are one "updated" entry listing the fields that really changed.
+   */
+  private async recordUpdate(
+    organizationId: string,
+    actorId: string,
+    before: ProjectFields,
+    after: ProjectFields & { id: string },
+  ): Promise<void> {
+    const base = {
+      organizationId,
+      actorId,
+      targetType: 'project' as const,
+      targetId: after.id,
+      projectId: after.id,
+    };
+    if (before.sourceContextEnabled !== after.sourceContextEnabled) {
+      await this.audit.record({
+        ...base,
+        action: after.sourceContextEnabled
+          ? 'project.source_context_enabled'
+          : 'project.source_context_disabled',
+        metadata: { name: after.name },
+      });
+    }
+    const changed = UPDATABLE_FIELDS.filter((f) => before[f] !== after[f]);
+    if (changed.length > 0) {
+      await this.audit.record({
+        ...base,
+        action: 'project.updated',
+        metadata: {
+          name: after.name,
+          fields: changed.join(', '),
+          ...(changed.includes('name') ? { previousName: before.name } : {}),
+        },
+      });
+    }
   }
 
   private async getOrThrow(organizationId: string, id: string) {

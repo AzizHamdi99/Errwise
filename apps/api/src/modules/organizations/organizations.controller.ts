@@ -70,6 +70,7 @@ export class OrganizationsController {
       membership.organizationId,
       membership.role,
       body,
+      membership.userId,
     );
   }
 

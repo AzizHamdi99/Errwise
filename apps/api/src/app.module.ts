@@ -10,6 +10,7 @@ import { OrganizationsModule } from './modules/organizations/organizations.modul
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AccountModule } from './modules/account/account.module';
+import { AuditModule } from './modules/audit/audit.module';
 import { ConfigModule } from '@nestjs/config';
 import { validateEnv } from './config/env';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
@@ -32,6 +33,7 @@ import { StatsModule } from './modules/stats/stats.module';
     AuthModule,
     UsersModule,
     AccountModule,
+    AuditModule,
     OrganizationsModule,
     MembershipsModule,
     ProjectsModule,

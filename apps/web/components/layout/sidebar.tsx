@@ -5,6 +5,7 @@ import {
   FolderKanban,
   Gauge,
   LayoutDashboard,
+  ScrollText,
   Settings,
   Users,
 } from "lucide-react";
@@ -15,6 +16,8 @@ import { Brand } from "@/components/shared/brand";
 import { UserMenu } from "@/features/auth/components/user-menu";
 import { OrgSwitcher } from "@/features/organizations/components/org-switcher";
 import { useCurrentOrg } from "@/features/organizations/use-current-org";
+import { can } from "@/lib/permissions";
+import type { Action } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { PendingCountBadge } from "@/features/invitations/components/pending-count-badge";
 import { ThemeToggle } from "../shared/theme-toggle";
@@ -29,11 +32,26 @@ const MAIN_NAV = [
   { label: "Members", segment: "members", icon: Users },
 ] as const;
 
+// `permission`: hidden from roles that would only get a 403. The API still enforces it.
 const FOOTER_NAV = [
+  {
+    label: "Audit log",
+    segment: "audit-log",
+    icon: ScrollText,
+    permission: "audit.read",
+  },
   { label: "Settings", segment: "settings", icon: Settings },
-] as const;
+] as const satisfies readonly {
+  label: string;
+  segment: string;
+  icon: typeof Settings;
+  permission?: Action;
+}[];
 
 type NavEntry = (typeof MAIN_NAV)[number] | (typeof FOOTER_NAV)[number];
+
+const visibleTo = (role: OrgRole) => (item: NavEntry) =>
+  !("permission" in item) || can(role, item.permission);
 
 function NavItem({
   item,
@@ -110,7 +128,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <div className="mt-auto space-y-3">
         {org ? (
           <nav aria-label="Workspace" className="space-y-1">
-            {FOOTER_NAV.map((item) => (
+            {FOOTER_NAV.filter(visibleTo(org.role)).map((item) => (
               <NavItem
                 key={item.label}
                 item={item}

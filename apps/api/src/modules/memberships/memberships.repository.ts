@@ -24,9 +24,14 @@ export class MembershipsRepository {
     });
   }
 
-  find(userId: string, organizationId: string): Promise<Membership | null> {
+  /** With the user, so a removed member can still be named in the audit log. */
+  find(
+    userId: string,
+    organizationId: string,
+  ): Promise<MembershipWithUser | null> {
     return this.prisma.membership.findUnique({
       where: { userId_organizationId: { userId, organizationId } },
+      include: memberInclude,
     });
   }
 

@@ -17,6 +17,7 @@ import type {
 } from '@errwise/shared';
 import { sha256 } from '../../common/utils/hash';
 import type { Env } from '../../config/env';
+import { AuditService } from '../audit/audit.service';
 import { MailService } from '../mail/mail.service';
 import { toOrgRole } from '../memberships/memberships.mapper';
 import { MembershipsService } from '../memberships/memberships.service';
@@ -47,6 +48,7 @@ export class InvitationsService {
     private readonly memberships: MembershipsService,
     private readonly mail: MailService,
     private readonly config: ConfigService<Env, true>,
+    private readonly audit: AuditService,
   ) {}
 
   // ---- owner / admin side -------------------------------------------------
@@ -87,6 +89,14 @@ export class InvitationsService {
         'Could not send the invitation email',
       );
     }
+    await this.audit.record({
+      organizationId: actor.organizationId,
+      actorId: actor.userId,
+      action: 'invitation.sent',
+      targetType: 'invitation',
+      targetId: invitation.id,
+      metadata: { email: invitation.email, role: invitation.role },
+    });
     return toPublicInvitation(invitation);
   }
 
@@ -115,6 +125,14 @@ export class InvitationsService {
         'Could not send the invitation email',
       );
     }
+    await this.audit.record({
+      organizationId: actor.organizationId,
+      actorId: actor.userId,
+      action: 'invitation.resent',
+      targetType: 'invitation',
+      targetId: invitation.id,
+      metadata: { email: invitation.email, role: invitation.role },
+    });
     return toPublicInvitation(invitation);
   }
 
@@ -123,6 +141,14 @@ export class InvitationsService {
     if (!(await this.repo.revoke(existing.id))) {
       throw new NotFoundException('Invitation not found');
     }
+    await this.audit.record({
+      organizationId: actor.organizationId,
+      actorId: actor.userId,
+      action: 'invitation.revoked',
+      targetType: 'invitation',
+      targetId: existing.id,
+      metadata: { email: existing.email, role: existing.role },
+    });
   }
 
   // ---- invitee side -------------------------------------------------------
@@ -150,6 +176,15 @@ export class InvitationsService {
     if (!accepted) {
       throw new NotFoundException('Invitation is invalid or has expired');
     }
+    // The person who accepted is the actor: they joined the organization.
+    await this.audit.record({
+      organizationId: invitation.organizationId,
+      actorId: userId,
+      action: 'invitation.accepted',
+      targetType: 'invitation',
+      targetId: invitation.id,
+      metadata: { email: invitation.email, role: invitation.role },
+    });
 
     // Read the real role: an existing member keeps theirs.
     const membership = await this.memberships.findActive(
