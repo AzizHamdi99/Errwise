@@ -8,12 +8,17 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
+  bulkUpdateIssuesSchema,
   idSchema,
   listIssuesQuerySchema,
   updateIssueSchema,
 } from '@errwise/shared';
 import type {
+  BulkUpdateIssuesInput,
+  BulkUpdateIssuesResult,
   IssueDetail,
+  IssueFacets,
+  IssueListItem,
   ListIssuesQuery,
   Paginated,
   PublicIssue,
@@ -36,8 +41,17 @@ export class IssuesController {
     @Param('projectId', new ZodValidationPipe(idSchema)) projectId: string,
     @Query(new ZodValidationPipe(listIssuesQuerySchema)) query: ListIssuesQuery,
     @CurrentMembership() membership: OrgMembership,
-  ): Promise<Paginated<PublicIssue>> {
+  ): Promise<Paginated<IssueListItem>> {
     return this.issues.list(membership.organizationId, projectId, query);
+  }
+
+  // Declared before ':issueId', or "facets" would be read as an issue id.
+  @Get('facets')
+  facets(
+    @Param('projectId', new ZodValidationPipe(idSchema)) projectId: string,
+    @CurrentMembership() membership: OrgMembership,
+  ): Promise<IssueFacets> {
+    return this.issues.facets(membership.organizationId, projectId);
   }
 
   @Get(':issueId')
@@ -49,7 +63,21 @@ export class IssuesController {
     return this.issues.get(membership.organizationId, projectId, issueId);
   }
 
-  // Any member can change the status: it is daily work, not administration.
+  // Any member can change statuses, one or many: it is daily work, not administration.
+  @Patch()
+  bulkUpdateStatus(
+    @Param('projectId', new ZodValidationPipe(idSchema)) projectId: string,
+    @Body(new ZodValidationPipe(bulkUpdateIssuesSchema))
+    body: BulkUpdateIssuesInput,
+    @CurrentMembership() membership: OrgMembership,
+  ): Promise<BulkUpdateIssuesResult> {
+    return this.issues.bulkUpdateStatus(
+      membership.organizationId,
+      projectId,
+      body,
+    );
+  }
+
   @Patch(':issueId')
   updateStatus(
     @Param('projectId', new ZodValidationPipe(idSchema)) projectId: string,

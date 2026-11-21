@@ -355,6 +355,22 @@ export class IngestionRepository {
         },
       });
 
+      // After the event, so a duplicate eventId (P2002 above) rolls this back with the rest.
+      // skipDuplicates is INSERT ... ON CONFLICT DO NOTHING: the common case (environment
+      // already known) is one index probe and no write, and two requests that bring the same
+      // new environment together cannot fail each other (the second waits, then does nothing).
+      await tx.issueEnvironment.createMany({
+        data: [
+          {
+            issueId: issue.id,
+            projectId: data.projectId,
+            environment: data.environment,
+            firstSeenAt: data.timestamp,
+          },
+        ],
+        skipDuplicates: true,
+      });
+
       return { issueId: issue.id, issueCreated, regressed };
     });
   }
