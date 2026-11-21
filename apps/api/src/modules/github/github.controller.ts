@@ -72,6 +72,7 @@ export class GithubController {
       membership.organizationId,
       projectId,
       body.repo,
+      membership.userId,
     );
   }
 
@@ -82,6 +83,10 @@ export class GithubController {
     @Param('projectId', new ZodValidationPipe(idSchema)) projectId: string,
     @CurrentMembership() membership: OrgMembership,
   ): Promise<void> {
-    return this.integration.disconnect(membership.organizationId, projectId);
+    return this.integration.disconnect(
+      membership.organizationId,
+      projectId,
+      membership.userId,
+    );
   }
 }

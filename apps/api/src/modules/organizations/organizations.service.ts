@@ -11,6 +11,7 @@ import type {
   UpdateOrganizationInput,
 } from '@errwise/shared';
 import { randomSlugSuffix, slugify } from '../../common/utils/slug';
+import { AuditService } from '../audit/audit.service';
 import { toOrgRole } from '../memberships/memberships.mapper';
 import { toPublicOrganization } from './organizations.mapper';
 import { OrganizationsRepository } from './organizations.repository';
@@ -19,7 +20,10 @@ const MAX_SLUG_ATTEMPTS = 5;
 
 @Injectable()
 export class OrganizationsService {
-  constructor(private readonly repo: OrganizationsRepository) {}
+  constructor(
+    private readonly repo: OrganizationsRepository,
+    private readonly audit: AuditService,
+  ) {}
 
   async create(
     userId: string,
@@ -63,9 +67,20 @@ export class OrganizationsService {
     id: string,
     role: OrgRole,
     input: UpdateOrganizationInput,
+    actorId: string,
   ): Promise<PublicOrganization> {
-    await this.getById(id, role); // 404 if missing or deleted
+    const before = await this.getById(id, role); // 404 if missing or deleted
     const org = await this.repo.update(id, { name: input.name });
+    if (before.name !== org.name) {
+      await this.audit.record({
+        organizationId: id,
+        actorId,
+        action: 'organization.renamed',
+        targetType: 'organization',
+        targetId: id,
+        metadata: { from: before.name, to: org.name },
+      });
+    }
     return toPublicOrganization(org, role);
   }
 

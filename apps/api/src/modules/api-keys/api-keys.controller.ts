@@ -37,7 +37,12 @@ export class ApiKeysController {
     @Body(new ZodValidationPipe(createApiKeySchema)) body: CreateApiKeyInput,
     @CurrentMembership() membership: OrgMembership,
   ): Promise<CreatedApiKey> {
-    return this.apiKeys.create(membership.organizationId, projectId, body);
+    return this.apiKeys.create(
+      membership.organizationId,
+      projectId,
+      body,
+      membership.userId,
+    );
   }
 
   @Get()
@@ -56,6 +61,11 @@ export class ApiKeysController {
     @Param('keyId', new ZodValidationPipe(idSchema)) keyId: string,
     @CurrentMembership() membership: OrgMembership,
   ): Promise<void> {
-    return this.apiKeys.revoke(membership.organizationId, projectId, keyId);
+    return this.apiKeys.revoke(
+      membership.organizationId,
+      projectId,
+      keyId,
+      membership.userId,
+    );
   }
 }

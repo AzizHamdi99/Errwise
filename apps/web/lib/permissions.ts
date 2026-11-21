@@ -9,6 +9,7 @@ const RULES = {
   "invitation.manage": ["owner", "admin"],
   "member.changeRole": ["owner"],
   "member.remove": ["owner", "admin"],
+  "audit.read": ["owner", "admin"],
 } as const satisfies Record<string, readonly OrgRole[]>;
 
 export type Action = keyof typeof RULES;

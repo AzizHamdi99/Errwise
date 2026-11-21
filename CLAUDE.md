@@ -103,6 +103,7 @@ Every module is `controller -> service -> repository`.
 - Every query is scoped by organization or project. A resource from another tenant answers `404`, never `403`, so ids do not leak.
 - Dashboard routes use `JwtAuthGuard` + `OrgMemberGuard` + `@OrgRoles(...)`. Roles are `owner`, `admin`, `member`.
 - Repositories take the parent id (`findInProject(projectId, id)`), not just the child id. Organizations and projects are soft-deleted (`deletedAt`); always filter them out.
+- Audit log (ADR-008): a new owner/admin-visible change (keys, members, invitations, projects, GitHub, org settings) calls `AuditService.record()` after it succeeds, and only when something really changed. `record()` never throws. Metadata is flat and small: names and roles, never keys, hashes, tokens or bodies. Add the action to `AUDIT_ACTIONS`, never rename one.
 
 ## SDK rule
 

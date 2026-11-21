@@ -70,7 +70,12 @@ export class ProjectsController {
     body: UpdateProjectInput,
     @CurrentMembership() membership: OrgMembership,
   ): Promise<PublicProject> {
-    return this.projects.update(membership.organizationId, projectId, body);
+    return this.projects.update(
+      membership.organizationId,
+      projectId,
+      body,
+      membership.userId,
+    );
   }
 
   @Delete(':projectId')
@@ -80,6 +85,10 @@ export class ProjectsController {
     @Param('projectId', new ZodValidationPipe(idSchema)) projectId: string,
     @CurrentMembership() membership: OrgMembership,
   ): Promise<void> {
-    return this.projects.remove(membership.organizationId, projectId);
+    return this.projects.remove(
+      membership.organizationId,
+      projectId,
+      membership.userId,
+    );
   }
 }
