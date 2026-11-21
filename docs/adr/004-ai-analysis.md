@@ -81,3 +81,24 @@ A LangChain chain or a LangGraph graph is one more class plus one line in `api/d
 - **Automatic analysis on every new issue:** better first impression, but costs are harder to
   cap on a free tier. It can come later, behind the queue, with its own limit.
 - **Scrub only in the SDK:** the SDK is untrusted and old versions stay in production.
+
+## Amendment, 2026-11-21: analysis feeds the GitHub issue (prompt v4)
+
+The analysis is also used to write the GitHub issue, so the model now returns two more fields:
+`issueTitle` (a short bug-report title, at most 120 characters) and `reproSteps` (at most five
+short sentences, a guess from the evidence only, empty when the evidence does not show how to
+trigger the error).
+
+- **Contract.** Required in the Pydantic `AnalysisOutput` (strict structured outputs need every
+  field required), **optional** in the Zod schema. A tolerant reader means rows stored before v4,
+  and an API deployed before the AI service, still parse: they simply have no title or steps.
+- **Cache.** `PROMPT_VERSION` is `v4` and `ANALYSIS_CACHE_VERSION` is `4`. After the deploy, the
+  first analysis of each issue is a new model call (one daily slot); older rows stay readable and
+  are still used for the GitHub issue, without the new fields.
+- **Deploy order.** `apps/ai` first, then the API. The other way round, the API would store
+  v3-shaped answers under v4 hashes and serve them until the input changes.
+- **Trust.** Nothing about "the output is untrusted" changes, it now also holds on GitHub. The
+  title and steps are model text, so they are shown in fenced `text` blocks (title: plain text,
+  newlines removed), never as markdown. See "Github integration.md" section 4.2.
+- **No new call.** Creating the GitHub issue reuses the stored analysis. It never calls the AI
+  service and never spends the daily allowance.

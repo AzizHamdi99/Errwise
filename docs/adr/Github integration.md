@@ -66,7 +66,14 @@ New event on a resolved issue
 
 - Returns the existing link if the issue was already created.
 - Takes an atomic claim (`updateMany` on `githubIssueClaimedAt`). Only one concurrent request creates the issue. A claim older than 60 s is treated as dead.
-- The content (`github-issue-content.ts`) truncates long values, wraps SDK-provided text in inline code and fences longer than any backtick run, so it cannot become markdown or `@mentions`.
+- The content (`github-issue-content.ts`, a pure function) truncates long values, wraps SDK-provided text in inline code and fences longer than any backtick run, so it cannot become markdown or `@mentions`.
+- **AI content, with no extra AI call.** Inside the claim, the service reads the latest stored `IssueAnalysis` of the issue (`GithubRepository.findLatestAnalysis`, a direct read because `AnalysisModule` already depends on this module) and validates it with `storedAnalysisSchema.safeParse`. A row that does not fit counts as "no analysis": creation never fails because of it.
+  - With an analysis: the title is `[Errwise] <issueTitle>` (falls back to the error title), and the body gets an "AI analysis" section: model, date and confidence, then summary, probable cause, suggested fix, repro steps (a guess) and the files read.
+  - Without one: the plain template (table, message, stack). Nothing is asked of the AI service, so creating an issue costs no quota and no latency. The dashboard hints to run the analysis first.
+  - The latest analysis can describe an older event than the one shown. The body states its date and confidence, and says it can be wrong.
+- **Model text is untrusted** (ADR-004). Every model-written part goes in a ` ```text ` fence longer than any backtick run inside it, wrapped at 100 columns, so nothing in it renders: no `@mentions`, `#12` references, links or SHAs. Only the Errwise link, built by the backend, is a real link. The title is plain text with control characters and newlines removed, capped at 200.
+- **Labels** are a fixed set: `errwise`, `bug`, `level:<level>`, `env:<environment>`. The last two come from the SDK, so they are lowercased, restricted to `[a-z0-9._-]` and capped at 50 characters. If GitHub answers `422` (it refused a label, or the app may not create labels), the client retries once without labels: the issue matters more than its labels. Other failures are not retried, because a retry could create a second issue.
+- The body is capped below GitHub's 65 536 character limit.
 - On failure the claim is released.
 
 ### 4.3 Webhook: GitHub to Errwise
@@ -147,6 +154,8 @@ In queue mode the worker also needs the `GITHUB_*` variables, because it loads t
 5. Resolve the issue, trigger the same error: reopened, `regressionCount = 1`, regression email received.
 6. With a closed GitHub issue: the GitHub issue is reopened and has the regression comment.
 7. Trigger it again: no second email and no second comment.
+8. Create a GitHub issue for an issue **with** an analysis: AI title, "AI analysis" section, four labels. For one **without**: the plain template and the dashboard hint.
+9. Put `@someone`, `#1` and a triple backtick in a demo-app error message, analyze it, create the GitHub issue: nobody is pinged, nothing links, nothing breaks out of its block.
 
 ## 11. Known limits and next steps
 
