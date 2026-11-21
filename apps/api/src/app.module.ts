@@ -9,6 +9,7 @@ import { MembershipsModule } from './modules/memberships/memberships.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { AccountModule } from './modules/account/account.module';
 import { ConfigModule } from '@nestjs/config';
 import { validateEnv } from './config/env';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
@@ -30,6 +31,7 @@ import { StatsModule } from './modules/stats/stats.module';
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
     AuthModule,
     UsersModule,
+    AccountModule,
     OrganizationsModule,
     MembershipsModule,
     ProjectsModule,

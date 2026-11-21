@@ -44,6 +44,14 @@ export class UsersService {
     }
   }
 
+  async updateName(id: string, name: string): Promise<PublicUser> {
+    return toPublicUser(await this.repo.updateName(id, name));
+  }
+
+  updatePasswordHash(id: string, passwordHash: string): Promise<void> {
+    return this.repo.updatePasswordHash(id, passwordHash);
+  }
+
   touchLastLogin(id: string): Promise<User> {
     return this.repo.touchLastLogin(id);
   }
