@@ -2,7 +2,7 @@ import { CheckCircle2, Inbox, SearchX } from "lucide-react";
 import Link from "next/link";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
-import type { IssueFilters } from "../use-issue-filters";
+import { isFiltered, type IssueFilters } from "../use-issue-filters";
 
 interface Props {
   filters: IssueFilters;
@@ -19,18 +19,12 @@ export function IssuesEmptyState({
   onClear,
   onShowAll,
 }: Props) {
-  const filtered =
-    !!filters.environment ||
-    !!filters.search ||
-    filters.status === "resolved" ||
-    filters.status === "ignored";
-
-  if (filtered) {
+  if (isFiltered(filters)) {
     return (
       <EmptyState
         icon={SearchX}
         title="No issues match your filters"
-        description="Try a different search, environment or status."
+        description="Try different filters or a different search."
         action={
           <Button variant="outline" onClick={onClear}>
             Clear filters
