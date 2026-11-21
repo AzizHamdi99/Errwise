@@ -133,7 +133,7 @@ describe('the analysis input with code', () => {
   });
 
   it('uses a cache version that matches the prompt of the AI service', () => {
-    // Bump both together: PROMPT_VERSION in apps/ai/app/analysis/prompts.py is "v3".
-    expect(ANALYSIS_CACHE_VERSION).toBe(3);
+    // Bump both together: PROMPT_VERSION in apps/ai/app/analysis/prompts.py is "v4".
+    expect(ANALYSIS_CACHE_VERSION).toBe(4);
   });
 });

@@ -12,7 +12,7 @@ import { scrubEvent, scrubText } from '../../common/utils/scrub';
  * Part of the cache key. Bump it whenever the prompt of apps/ai changes
  * (its PROMPT_VERSION), so old analyses are not served for the new prompt.
  */
-export const ANALYSIS_CACHE_VERSION = 3;
+export const ANALYSIS_CACHE_VERSION = 4;
 
 const MAX_SNIPPET_CODE = 2_000;
 const MAX_SNIPPET_LINE = 150;

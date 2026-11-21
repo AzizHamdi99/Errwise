@@ -38,6 +38,12 @@ export const analysisResultSchema = z.object({
   suggestedFix: z.string().min(1).max(2_000),
   confidence: z.enum(ANALYSIS_CONFIDENCES),
   framesUsed: z.array(z.string().max(1_000)).max(10),
+  /**
+   * Optional for the tolerant reader: rows stored before prompt v4, and an AI service that
+   * has not been deployed yet, do not have them. Used for the GitHub issue, plain text only.
+   */
+  issueTitle: z.string().min(1).max(120).optional(),
+  reproSteps: z.array(z.string().min(1).max(300)).max(5).optional(),
   promptVersion: z.string().min(1).max(32),
   model: z.string().min(1).max(100),
 });

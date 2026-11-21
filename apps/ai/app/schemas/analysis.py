@@ -73,6 +73,21 @@ class AnalysisOutput(CamelModel):
         max_length=10,
         description="Stack frames the analysis relies on, copied verbatim from the stack.",
     )
+    issue_title: str = Field(
+        min_length=1,
+        max_length=120,
+        description=(
+            "A short title for a bug report: what is broken and where. Plain text, "
+            "no error type prefix, no @mentions."
+        ),
+    )
+    repro_steps: list[str] = Field(
+        max_length=5,
+        description=(
+            "Likely steps to reproduce, one short plain sentence each. Empty list when the "
+            "evidence does not show how to trigger the error."
+        ),
+    )
 
 
 class AnalyzeResponse(AnalysisOutput):

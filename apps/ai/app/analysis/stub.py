@@ -18,6 +18,8 @@ class StubAnalyzer:
             suggested_fix="Stub analysis. No model was called.",
             confidence="low",
             frames_used=frames,
+            issue_title=f"{request.type}: {request.message[:80]}",
+            repro_steps=[],
             prompt_version="stub",
             model="stub",
         )

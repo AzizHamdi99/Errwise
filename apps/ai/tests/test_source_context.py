@@ -24,6 +24,8 @@ GOOD = {
     "suggestedFix": "Check the value before reading it.",
     "confidence": "high",
     "framesUsed": [],
+    "issueTitle": "Handler reads a property of an undefined user",
+    "reproSteps": [],
 }
 
 
@@ -67,8 +69,8 @@ class TestContract:
 
 
 class TestPrompt:
-    def test_is_version_three(self) -> None:
-        assert PROMPT_VERSION == "v3"
+    def test_is_version_four(self) -> None:
+        assert PROMPT_VERSION == "v4"
 
     def test_no_code_block_without_snippets(self) -> None:
         prompt = build_user_prompt(request(sourceContext=None))
@@ -134,5 +136,5 @@ class TestAnalyzer:
 
         user_message = seen["body"]["messages"][1]["content"]
         assert CODE in user_message
-        assert result.prompt_version == "v3"
+        assert result.prompt_version == "v4"
         assert "<source_code>" in seen["body"]["messages"][0]["content"]
