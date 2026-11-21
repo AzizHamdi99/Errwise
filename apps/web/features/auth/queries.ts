@@ -1,5 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { LoginInput, PublicUser, RegisterInput } from "@errwise/shared";
+import type {
+  LoginInput,
+  PublicUser,
+  RegisterInput,
+  RegisterResult,
+} from "@errwise/shared";
 import { api } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
@@ -41,8 +46,28 @@ export function useLogout(redirectTo = "/login") {
 
 export const useLogin = () => useAuthMutation<LoginInput>("/auth/login");
 
+/** Registering does not sign in: it answers whether the verification email was sent. */
 export const useRegister = () =>
-  useAuthMutation<RegisterInput>("/auth/register");
+  useMutation({
+    mutationFn: (input: RegisterInput) =>
+      api<RegisterResult>("/auth/register", { method: "POST", body: input }),
+  });
+
+export const useVerifyEmail = () =>
+  useMutation({
+    mutationFn: (token: string) =>
+      api<void>("/auth/verify-email", { method: "POST", body: { token } }),
+  });
+
+/** Always succeeds for a valid address: the answer never says whether it has an account. */
+export const useResendVerification = () =>
+  useMutation({
+    mutationFn: (email: string) =>
+      api<void>("/auth/resend-verification", {
+        method: "POST",
+        body: { email },
+      }),
+  });
 
 export const useMe = () =>
   useQuery({

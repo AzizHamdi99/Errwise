@@ -9,19 +9,32 @@ datasource db {
 }
 
 model User {
-  id              String                @id @default(uuid(7)) @db.Uuid
-  email           String                @unique
-  name            String?
-  passwordHash    String?
-  invitationsSent Invitation[]          @relation("InvitationInviter")
-  refreshTokens   RefreshToken[]
-  emailVerifiedAt DateTime?             @db.Timestamptz(3)
-  googleId        String?               @unique
-  lastLoginAt     DateTime?             @db.Timestamptz(3)
-  createdAt       DateTime              @default(now()) @db.Timestamptz(3)
-  updatedAt       DateTime              @updatedAt @db.Timestamptz(3)
-  memberships     Membership[]
-  subscriptions   ProjectSubscription[]
+  id                String                @id @default(uuid(7)) @db.Uuid
+  email             String                @unique
+  name              String?
+  passwordHash      String?
+  invitationsSent   Invitation[]          @relation("InvitationInviter")
+  refreshTokens     RefreshToken[]
+  emailVerifiedAt   DateTime?             @db.Timestamptz(3)
+  googleId          String?               @unique
+  lastLoginAt       DateTime?             @db.Timestamptz(3)
+  createdAt         DateTime              @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime              @updatedAt @db.Timestamptz(3)
+  memberships       Membership[]
+  subscriptions     ProjectSubscription[]
+  emailVerification EmailVerification?
+}
+
+/// The pending email verification of a user. userId is the primary key, so there is at most one
+/// link at a time and a new link replaces the old one. Only the sha256 of the token is stored,
+/// like invitations and refresh tokens. The row is deleted when the link is used.
+model EmailVerification {
+  userId    String   @id @db.Uuid
+  tokenHash String   @unique
+  expiresAt DateTime @db.Timestamptz(3)
+  /// When the email was last sent: the resend cooldown is measured from it.
+  sentAt    DateTime @db.Timestamptz(3)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Organization {

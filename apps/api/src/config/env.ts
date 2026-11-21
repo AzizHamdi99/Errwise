@@ -20,6 +20,12 @@ export const envSchema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   INVITATION_TTL_DAYS: z.coerce.number().int().positive().default(7),
+  EMAIL_VERIFICATION_TTL_HOURS: z.coerce.number().int().positive().default(24),
+  EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(60),
   INGEST_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(300),
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),

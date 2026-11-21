@@ -5,6 +5,8 @@ export class ApiError extends Error {
     public status: number,
     message: string,
     public fieldErrors: { path: string; message: string }[] = [],
+    /** A stable code for the cases the UI has to tell apart, such as EMAIL_NOT_VERIFIED. */
+    public code?: string,
   ) {
     super(message);
   }
@@ -42,11 +44,17 @@ export async function api<T>(path: string, options: Options = {}): Promise<T> {
   if (!res.ok) {
     const data = (await res.json().catch(() => ({}))) as {
       message?: unknown;
+      code?: unknown;
       errors?: ApiError["fieldErrors"];
     };
     const message =
       typeof data.message === "string" ? data.message : "Something went wrong";
-    throw new ApiError(res.status, message, data.errors);
+    throw new ApiError(
+      res.status,
+      message,
+      data.errors,
+      typeof data.code === "string" ? data.code : undefined,
+    );
   }
 
   return res.status === 204 ? (undefined as T) : ((await res.json()) as T);
