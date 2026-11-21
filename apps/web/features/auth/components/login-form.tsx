@@ -29,6 +29,7 @@ export function LoginForm() {
   const sessionExpired = params.get("expired") === "1";
   const googleFailed = params.get("error") === "google";
   const justVerified = params.get("verified") === "1";
+  const passwordReset = params.get("reset") === "1";
   const invitedEmail = params.get("email") ?? "";
 
   const login = useLogin();
@@ -79,6 +80,14 @@ export function LoginForm() {
         <Alert>
           <AlertDescription>
             Email verified. You can log in now.
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      {passwordReset ? (
+        <Alert>
+          <AlertDescription>
+            Password changed. Log in with your new password.
           </AlertDescription>
         </Alert>
       ) : null}
@@ -145,6 +154,15 @@ export function LoginForm() {
             {...register("password")}
           />
         </Field>
+
+        <p className="-mt-2 text-right text-sm">
+          <Link
+            href="/forgot-password"
+            className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          >
+            Forgot password?
+          </Link>
+        </p>
 
         <Button type="submit" className="w-full" disabled={login.isPending}>
           {login.isPending ? (

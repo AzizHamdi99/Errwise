@@ -26,6 +26,12 @@ export const envSchema = z.object({
     .int()
     .positive()
     .default(60),
+  PASSWORD_RESET_TTL_MINUTES: z.coerce.number().int().positive().default(60),
+  PASSWORD_RESET_RESEND_COOLDOWN_SECONDS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(60),
   INGEST_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(300),
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),

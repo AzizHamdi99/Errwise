@@ -12,17 +12,21 @@ import {
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import {
+  forgotPasswordSchema,
   loginSchema,
   registerSchema,
   resendVerificationSchema,
+  resetPasswordSchema,
   verifyEmailSchema,
 } from '@errwise/shared';
 import type {
+  ForgotPasswordInput,
   LoginInput,
   PublicUser,
   RegisterInput,
   RegisterResult,
   ResendVerificationInput,
+  ResetPasswordInput,
   VerifyEmailInput,
 } from '@errwise/shared';
 import { REFRESH_COOKIE } from '../../common/constants';
@@ -36,6 +40,7 @@ import {
 import { AuthCookieService } from './auth-cookie.service';
 import { AuthService } from './auth.service';
 import { EmailVerificationService } from './email-verification.service';
+import { PasswordResetService } from './password-reset.service';
 import { ConfigService } from '@nestjs/config';
 import type { Env } from '../../config/env';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
@@ -46,6 +51,7 @@ export class AuthController {
   constructor(
     private readonly auth: AuthService,
     private readonly emailVerification: EmailVerificationService,
+    private readonly passwordReset: PasswordResetService,
     private readonly cookies: AuthCookieService,
     private readonly config: ConfigService<Env, true>,
   ) {}
@@ -111,6 +117,31 @@ export class AuthController {
     body: ResendVerificationInput,
   ): Promise<void> {
     return this.emailVerification.resend(body.email);
+  }
+
+  // Always the same answer, whether or not the email has an account. Each call can send an
+  // email, so it is limited harder than the other public routes.
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(RateLimitGuard)
+  @RateLimit(5, 600)
+  forgotPassword(
+    @Body(new ZodValidationPipe(forgotPasswordSchema))
+    body: ForgotPasswordInput,
+  ): Promise<void> {
+    return this.passwordReset.request(body.email);
+  }
+
+  // A POST from the web page, like verify-email. It does not sign in: the user logs in with the
+  // new password, and every other session is already revoked.
+  @Post('reset-password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(RateLimitGuard)
+  @RateLimit(20, 600)
+  resetPassword(
+    @Body(new ZodValidationPipe(resetPasswordSchema)) body: ResetPasswordInput,
+  ): Promise<void> {
+    return this.passwordReset.reset(body.token, body.password);
   }
 
   @Post('login')

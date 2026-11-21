@@ -5,6 +5,8 @@ import { AuthCookieService } from './auth-cookie.service';
 import { AuthController } from './auth.controller';
 import { EmailVerificationRepository } from './email-verification.repository';
 import { EmailVerificationService } from './email-verification.service';
+import { PasswordResetRepository } from './password-reset.repository';
+import { PasswordResetService } from './password-reset.service';
 import { AuthService } from './auth.service';
 import { RefreshTokenRepository } from './refresh-token.repository';
 import { RefreshTokenService } from './refresh-token.service';
@@ -23,6 +25,8 @@ import { GoogleAuthService } from './google-auth.service';
     GoogleAuthService,
     EmailVerificationService,
     EmailVerificationRepository,
+    PasswordResetService,
+    PasswordResetRepository,
   ],
 })
 export class AuthModule {}
