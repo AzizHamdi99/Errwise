@@ -1,6 +1,11 @@
 import type { Event, Issue } from '@prisma/client';
 import { ISSUE_STATUSES } from '@errwise/shared';
-import type { IssueStatus, PublicEvent, PublicIssue } from '@errwise/shared';
+import type {
+  IssueListItem,
+  IssueStatus,
+  PublicEvent,
+  PublicIssue,
+} from '@errwise/shared';
 
 /** `status` is a plain string in the database, so validate it here. */
 export function toIssueStatus(value: string): IssueStatus {
@@ -32,6 +37,14 @@ export function toPublicIssue(
         ? { number: issue.githubIssueNumber, url: issue.githubIssueUrl }
         : null,
   };
+}
+
+export function toIssueListItem(
+  issue: Issue,
+  environments: string[],
+  trend24h: number[],
+): IssueListItem {
+  return { ...toPublicIssue(issue, environments), trend24h };
 }
 
 export function toPublicEvent(event: Event): PublicEvent {

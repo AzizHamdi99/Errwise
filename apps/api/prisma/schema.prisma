@@ -50,28 +50,30 @@ model Membership {
 }
 
 model Project {
-  id             String                @id @default(uuid(7)) @db.Uuid
-  organizationId String                @db.Uuid
-  name           String
-  slug           String
-  platform       String                @default("node")
-  retentionDays  Int                   @default(30)
+  id                   String                @id @default(uuid(7)) @db.Uuid
+  organizationId       String                @db.Uuid
+  name                 String
+  slug                 String
+  platform             String                @default("node")
+  retentionDays        Int                   @default(30)
   /// Opt-in. Show and analyze the code around stack frames, read from the connected repo.
-  sourceContextEnabled Boolean         @default(false)
-  createdAt      DateTime              @default(now()) @db.Timestamptz(3)
-  updatedAt      DateTime              @updatedAt @db.Timestamptz(3)
-  deletedAt      DateTime?             @db.Timestamptz(3)
-  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sourceContextEnabled Boolean               @default(false)
+  createdAt            DateTime              @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime              @updatedAt @db.Timestamptz(3)
+  deletedAt            DateTime?             @db.Timestamptz(3)
+  organization         Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   githubInstallationId String?
   githubRepo           String?
-  apiKeys        ApiKey[]
-  issues         Issue[]
-  events         Event[]
-  subscriptions  ProjectSubscription[]
+  apiKeys              ApiKey[]
+  issues               Issue[]
+  events               Event[]
+  subscriptions        ProjectSubscription[]
+  issueEnvironments    IssueEnvironment[]
 
   @@unique([organizationId, slug])
   @@index([githubRepo])
 }
+
 model GithubWebhookDelivery {
   id         String   @id
   event      String
@@ -79,6 +81,7 @@ model GithubWebhookDelivery {
 
   @@index([receivedAt])
 }
+
 model Invitation {
   id             String       @id @default(uuid(7)) @db.Uuid
   organizationId String       @db.Uuid
@@ -129,35 +132,45 @@ model ApiKey {
 }
 
 model Issue {
-  id                 String    @id @default(uuid(7)) @db.Uuid
-  projectId          String    @db.Uuid
-  fingerprint        String
-  fingerprintVersion Int       @default(1)
-  title              String
-  type               String?
-  level              String    @default("error")
-  status             String    @default("unresolved")
-  eventCount         Int       @default(0)
-  firstSeenAt        DateTime  @db.Timestamptz(3)
-  lastSeenAt         DateTime  @db.Timestamptz(3)
-  firstRelease       String?
-  lastRelease        String?
-  resolvedAt         DateTime? @db.Timestamptz(3)
-  githubIssueNumber  Int?
-  githubIssueUrl     String?
-  githubIssueClaimedAt DateTime? @db.Timestamptz(3)
-  lastNotifiedAt     DateTime? @db.Timestamptz(3)
-  githubState          String?
-  regressionCount      Int       @default(0)
-  lastRegressionAt     DateTime? @db.Timestamptz(3)
-  lastRegressionNotifiedAt DateTime? @db.Timestamptz(3)
-  project            Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  events             Event[]
-  analyses           IssueAnalysis[]
+  id                       String             @id @default(uuid(7)) @db.Uuid
+  projectId                String             @db.Uuid
+  fingerprint              String
+  fingerprintVersion       Int                @default(1)
+  title                    String
+  type                     String?
+  level                    String             @default("error")
+  status                   String             @default("unresolved")
+  eventCount               Int                @default(0)
+  firstSeenAt              DateTime           @db.Timestamptz(3)
+  lastSeenAt               DateTime           @db.Timestamptz(3)
+  firstRelease             String?
+  lastRelease              String?
+  resolvedAt               DateTime?          @db.Timestamptz(3)
+  githubIssueNumber        Int?
+  githubIssueUrl           String?
+  githubIssueClaimedAt     DateTime?          @db.Timestamptz(3)
+  lastNotifiedAt           DateTime?          @db.Timestamptz(3)
+  githubState              String?
+  regressionCount          Int                @default(0)
+  lastRegressionAt         DateTime?          @db.Timestamptz(3)
+  lastRegressionNotifiedAt DateTime?          @db.Timestamptz(3)
+  project                  Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  events                   Event[]
+  analyses                 IssueAnalysis[]
+  environments             IssueEnvironment[]
 
   @@unique([projectId, githubIssueNumber])
   @@unique([projectId, fingerprint])
-  @@index([projectId, status, lastSeenAt(sort: Desc)])
+  // Ends with id: the list cursor is (lastSeenAt, id), so the index matches the ORDER BY.
+  @@index([projectId, status, lastSeenAt(sort: Desc), id(sort: Desc)])
+  // The other two sorts of the list ("first seen", "most events"), same shape as the one above.
+  @@index([projectId, status, firstSeenAt(sort: Desc), id(sort: Desc)])
+  @@index([projectId, status, eventCount(sort: Desc), id(sort: Desc)])
+  // The "All" status tab has no status filter, so it cannot use the index above: it would scan
+  // and sort the whole table. Same order, without the status.
+  @@index([projectId, lastSeenAt(sort: Desc), id(sort: Desc)])
+  // Trigram index for the title search (ILIKE '%term%'), needs the pg_trgm extension.
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "Issue_title_trgm_idx")
 }
 
 model Event {
@@ -183,6 +196,26 @@ model Event {
   @@unique([projectId, eventId])
   @@index([issueId, timestamp(sort: Desc)])
   @@index([projectId, timestamp(sort: Desc)])
+}
+
+/// The environments an issue was seen in: one row per (issue, environment), written in the
+/// ingestion transaction. It is a summary of Event, so the list never has to read the events
+/// of an issue (a hot issue has millions) just to show "production, staging".
+/// firstSeenAt is the timestamp of the event that created the row. The backfill used the oldest
+/// event timestamp, and an older event that arrives later does not lower it, so treat it as
+/// approximate. Nothing reads it yet.
+model IssueEnvironment {
+  issueId     String   @db.Uuid
+  projectId   String   @db.Uuid
+  environment String
+  firstSeenAt DateTime @db.Timestamptz(3)
+  issue       Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  /// One row per environment of an issue; also the lookup for "issues seen in environment X".
+  @@id([issueId, environment])
+  /// Environments of a project (the list filter's choices).
+  @@index([projectId, environment])
 }
 
 model ProjectSubscription {

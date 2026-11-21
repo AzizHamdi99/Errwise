@@ -7,6 +7,9 @@ interface Handlers {
   onOpen: () => void;
   onResolve: () => void;
   onIgnore: () => void;
+  /** Ticks or unticks the row the keyboard is on. */
+  onToggleSelect: () => void;
+  onClearSelection: () => void;
   onSearch: () => void;
 }
 
@@ -51,6 +54,12 @@ export function useIssueShortcuts(handlers: Handlers) {
           break;
         case "i":
           if (!event.repeat) h.onIgnore();
+          break;
+        case "x":
+          if (!event.repeat) h.onToggleSelect();
+          break;
+        case "Escape":
+          h.onClearSelection();
           break;
         case "/":
           event.preventDefault();
