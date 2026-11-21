@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import type { Event, Issue } from '@prisma/client';
+import type { Event, Issue, IssueAnalysis } from '@prisma/client';
 
 export interface GithubProjectLink {
   id: string;
@@ -71,6 +71,18 @@ export class GithubRepository {
     return this.prisma.event.findFirst({
       where: { issueId },
       orderBy: { timestamp: 'desc' },
+    });
+  }
+
+  /**
+   * Read here, not through AnalysisModule: that module imports SourceContextModule, which
+   * imports this one, so the other way round would be a cycle. Same order as
+   * AnalysisRepository.latestAnalysis. The caller owns the issue already (findIssue).
+   */
+  findLatestAnalysis(issueId: string): Promise<IssueAnalysis | null> {
+    return this.prisma.issueAnalysis.findFirst({
+      where: { issueId },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     });
   }
 
