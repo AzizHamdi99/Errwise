@@ -4,11 +4,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { Issue } from '@prisma/client';
+import type { Issue, IssueAnalysis } from '@prisma/client';
+import { storedAnalysisSchema } from '@errwise/shared';
 import type { GithubIssueLink } from '@errwise/shared';
 import type { Env } from '../../config/env';
 import { GithubApiClient } from './github-api.client';
-import { buildGithubIssueContent } from './github-issue-content';
+import {
+  buildGithubIssueContent,
+  type GithubIssueAnalysis,
+} from './github-issue-content';
 import { GithubRepository } from './github.repository';
 
 /** A claim older than this is treated as abandoned. */
@@ -66,10 +70,14 @@ export class GithubIssueService {
     }
 
     try {
-      const event = await this.repo.findLatestEvent(issue.id);
+      const [event, analysisRow] = await Promise.all([
+        this.repo.findLatestEvent(issue.id),
+        this.repo.findLatestAnalysis(issue.id),
+      ]);
       const content = buildGithubIssueContent({
         issue,
         event,
+        analysis: this.toAnalysis(analysisRow),
         issueUrl: `${this.webUrl}/organizations/${organizationId}/projects/${projectId}/issues/${issue.id}`,
       });
       const created = await this.github.createIssue(
@@ -83,6 +91,16 @@ export class GithubIssueService {
       await this.repo.releaseIssueClaim(issue.id);
       throw error;
     }
+  }
+
+  /**
+   * The stored result is validated again: a row that no longer fits the schema means "no
+   * analysis" (a plain issue), never a failed creation.
+   */
+  private toAnalysis(row: IssueAnalysis | null): GithubIssueAnalysis | null {
+    if (!row) return null;
+    const parsed = storedAnalysisSchema.safeParse(row.result);
+    return parsed.success ? { ...parsed.data, createdAt: row.createdAt } : null;
   }
 
   private toLink(issue: Issue): GithubIssueLink | null {

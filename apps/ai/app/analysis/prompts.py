@@ -1,7 +1,7 @@
 from app.schemas.analysis import AnalyzeRequest
 
 # Bump when the prompt changes: the API caches analyses per prompt version.
-PROMPT_VERSION = "v3"
+PROMPT_VERSION = "v4"
 
 MAX_PROMPT_MESSAGE = 2_000
 MAX_PROMPT_STACK = 8_000
@@ -39,6 +39,11 @@ Rules:
 - Say plainly what you are inferring and what the evidence actually shows.
 - framesUsed must be lines copied verbatim from the stack, at most 5.
   Use an empty list if there is no stack.
+- issueTitle is a short bug report title (what is broken and where), without the error type
+  as a prefix.
+- reproSteps is a guess made only from the evidence: the failing route, function or input
+  that the report or code shows. Never invent endpoints, payloads or user actions. Use an
+  empty list when the evidence does not say how the error is triggered.
 - Be brief and concrete. Plain text only: no markdown, no links, no @mentions.
 - Personal data and secrets are already removed and shown as [email], [token], [key] and
   similar. Do not try to guess them, and never repeat anything that looks like a secret.

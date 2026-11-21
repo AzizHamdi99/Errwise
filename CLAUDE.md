@@ -120,6 +120,7 @@ The SDK must never throw into, block, or slow the host app. `captureException` n
 
 - GitHub is the source of truth for who fixes what. Errwise only syncs state: issue creation, `closed`/`reopened` webhooks into `githubState`, and reopen + comment on regression.
 - Creating a GitHub issue takes an atomic claim (`githubIssueClaimedAt`, 60 s TTL). Webhooks are deduped by delivery id (`GithubWebhookDelivery`). GitHub sync for regressions never throws.
+- The issue content is built by a pure function (`github-issue-content.ts`): AI sections only when a stored analysis exists, fixed labels (`errwise`, `bug`, `level:*`, `env:*`), and one retry without labels on a `422`. Never retry other failures: it could create a second issue.
 - Source code on the issue page (ADR-005): opt-in per project (`Project.sourceContextEnabled`, owner only), read from GitHub on demand at the deployed `Event.commitSha`, cached in memory only, never stored. Frame paths are untrusted: only read paths that exist in the repository tree. Needs the GitHub App permission Contents: Read-only.
 - The install flow uses a signed, short-lived `state`, re-checks the owner role, and verifies the user's access to the installation. See `docs/adr/Github integration.md`.
 
@@ -131,7 +132,8 @@ The SDK must never throw into, block, or slow the host app. `captureException` n
 - Source code reaches the LLM only when `Project.sourceContextEnabled` is on: up to five snippets (the lines around the failing frames), scrubbed like every other text, delimited as untrusted data in the prompt and part of the cache key. `AnalysisService` asks `SourceContextService` and never lets a code problem fail an analysis. `IssueAnalysis.result.sourceFiles` records which files were read, and the dashboard shows it.
 - The contract lives twice and must change together: `packages/shared/src/analysis.ts` (Zod) and `apps/ai/app/schemas/analysis.py` (Pydantic). The Python side rejects unknown fields.
 - Changing the prompt: bump `PROMPT_VERSION` in `apps/ai/app/analysis/prompts.py` and `ANALYSIS_CACHE_VERSION` in `analysis-input.ts` together, or old analyses keep being served.
-- The model output is untrusted text: render it as plain text only (no HTML, markdown or links) and never post it unescaped to GitHub or email.
+- The model output is untrusted text: render it as plain text only (no HTML, markdown or links) and never post it unescaped to GitHub or email. On GitHub it goes only inside a fenced `text` block (`github-issue-content.ts`), and the title is plain text.
+- The GitHub issue reuses the stored analysis (`issueTitle`, `reproSteps` and the rest, optional because older rows lack them). It never calls `apps/ai` and costs no quota. Deploy `apps/ai` before the API when the contract changes.
 - The feature is off until `AI_SERVICE_URL` and `AI_SERVICE_SECRET` are both set. Cost is bounded by the cache and `AI_DAILY_LIMIT_PER_ORG`.
 - In `apps/ai`, routes only know the `Analyzer` protocol (`app/analysis/base.py`). A new LLM, chain or LangGraph graph is a new class plus one line in `app/api/deps.py`.
 

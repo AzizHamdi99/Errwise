@@ -25,6 +25,8 @@ GOOD = {
     "suggestedFix": "Check the lookup result before reading it.",
     "confidence": "medium",
     "framesUsed": ["at getUser (/app/src/users.js:10:5)"],
+    "issueTitle": "getUser crashes on an undefined lookup",
+    "reproSteps": ["Call getUser with an id that does not exist."],
 }
 
 Handler = Callable[[httpx.Request], httpx.Response]
@@ -82,6 +84,8 @@ async def test_sends_a_strict_schema_with_every_field_required() -> None:
         "suggestedFix",
         "confidence",
         "framesUsed",
+        "issueTitle",
+        "reproSteps",
     }
     assert schema["properties"]["confidence"]["enum"] == ["low", "medium", "high"]
 
@@ -132,6 +136,9 @@ async def test_no_stack_means_no_frames() -> None:
         {k: v for k, v in GOOD.items() if k != "summary"},
         {**GOOD, "confidence": "certain"},
         {**GOOD, "summary": "x" * 501},
+        {**GOOD, "issueTitle": "x" * 121},
+        {**GOOD, "reproSteps": ["step"] * 6},
+        {k: v for k, v in GOOD.items() if k != "issueTitle"},
     ],
 )
 async def test_invalid_model_output_is_rejected(content: object) -> None:

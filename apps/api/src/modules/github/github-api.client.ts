@@ -138,15 +138,34 @@ export class GithubApiClient {
     }
     return repos;
   }
+
+  /**
+   * Labels are decoration: GitHub answers 422 when it refuses one (a label name it does not
+   * accept, or an app that may not create labels). The issue is worth more than its labels,
+   * so that case is retried once without them.
+   */
   async createIssue(
     installationId: string,
     repo: string,
-    input: { title: string; body: string },
+    input: { title: string; body: string; labels?: string[] },
   ): Promise<GithubIssueLink> {
     const token = await this.getInstallationToken(installationId);
-    const data = await this.json<{ number: number; html_url: string }>(
-      `/repos/${repo}/issues`,
-      { token, method: 'POST', body: input },
+    const path = `/repos/${repo}/issues`;
+
+    let res = await this.request(path, { token, method: 'POST', body: input });
+    if (res.status === 422 && input.labels?.length) {
+      this.logger.warn('GitHub refused the labels, creating the issue without');
+      const { title, body } = input;
+      res = await this.request(path, {
+        token,
+        method: 'POST',
+        body: { title, body },
+      });
+    }
+    const data = await this.parse<{ number: number; html_url: string }>(
+      res,
+      'POST',
+      path,
     );
     return { number: data.number, url: data.html_url };
   }
@@ -315,9 +334,13 @@ export class GithubApiClient {
   }
 
   private async json<T>(path: string, opts: RequestOptions): Promise<T> {
-    const method = opts.method ?? 'GET';
-    const res = await this.send(`${GITHUB_API}${path}`, {
-      method,
+    const res = await this.request(path, opts);
+    return this.parse<T>(res, opts.method ?? 'GET', path);
+  }
+
+  private request(path: string, opts: RequestOptions): Promise<Response> {
+    return this.send(`${GITHUB_API}${path}`, {
+      method: opts.method ?? 'GET',
       headers: {
         Authorization: `Bearer ${opts.token}`,
         Accept: 'application/vnd.github+json',
@@ -327,6 +350,14 @@ export class GithubApiClient {
       },
       body: opts.body ? JSON.stringify(opts.body) : undefined,
     });
+  }
+
+  /** Logs the status only, never the body (it can echo what we sent). */
+  private async parse<T>(
+    res: Response,
+    method: string,
+    path: string,
+  ): Promise<T> {
     if (!res.ok) {
       this.logger.warn(`GitHub ${method} ${path} failed with ${res.status}`);
       throw new BadGatewayException('GitHub request failed');

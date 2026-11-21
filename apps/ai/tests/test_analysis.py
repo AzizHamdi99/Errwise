@@ -42,6 +42,8 @@ def test_returns_a_camel_case_analysis(client: TestClient, auth: dict[str, str])
         "suggestedFix",
         "confidence",
         "framesUsed",
+        "issueTitle",
+        "reproSteps",
         "promptVersion",
         "model",
     }
