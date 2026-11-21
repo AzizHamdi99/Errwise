@@ -10,6 +10,7 @@ import { PasswordResetService } from './password-reset.service';
 import { AuthService } from './auth.service';
 import { RefreshTokenRepository } from './refresh-token.repository';
 import { RefreshTokenService } from './refresh-token.service';
+import { SessionsService } from './sessions.service';
 import { GoogleStrategy } from './google.strategy';
 import { GoogleAuthService } from './google-auth.service';
 
@@ -27,6 +28,9 @@ import { GoogleAuthService } from './google-auth.service';
     EmailVerificationRepository,
     PasswordResetService,
     PasswordResetRepository,
+    SessionsService,
   ],
+  // The account module lists and revokes the sessions of the signed-in user.
+  exports: [SessionsService],
 })
 export class AuthModule {}

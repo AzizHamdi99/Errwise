@@ -1,6 +1,7 @@
 "use client";
 
-import { LogOut } from "lucide-react";
+import { LogOut, UserCog } from "lucide-react";
+import Link from "next/link";
 import { InitialsAvatar } from "@/components/shared/initials-avatar";
 import { Button } from "@/components/ui/button";
 import { useLogout, useMe } from "../queries";
@@ -21,6 +22,16 @@ export function UserMenu() {
           <p className="truncate text-xs text-muted-foreground">{user.email}</p>
         ) : null}
       </div>
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label="Account settings"
+        title="Account settings"
+        render={<Link href="/account" />}
+        nativeButton={false}
+      >
+        <UserCog aria-hidden />
+      </Button>
       <Button
         variant="ghost"
         size="icon"

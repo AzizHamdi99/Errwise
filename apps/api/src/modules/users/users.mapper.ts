@@ -7,5 +7,6 @@ export function toPublicUser(user: User): PublicUser {
     email: user.email,
     name: user.name,
     createdAt: user.createdAt.toISOString(),
+    hasPassword: user.passwordHash !== null,
   };
 }

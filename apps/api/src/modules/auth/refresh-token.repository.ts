@@ -46,6 +46,42 @@ export class RefreshTokenRepository {
     });
   }
 
+  /**
+   * The live token of every session (family) of a user. Rotation revokes the previous token, so
+   * a family has at most one live token, and its creation time is when it was last refreshed.
+   */
+  listLive(userId: string, now: Date): Promise<RefreshToken[]> {
+    return this.prisma.refreshToken.findMany({
+      where: { userId, revokedAt: null, expiresAt: { gt: now } },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    });
+  }
+
+  /** Scoped by user: another user's family revokes nothing. Returns false when nothing was live. */
+  async revokeFamilyOfUser(userId: string, familyId: string): Promise<boolean> {
+    const { count } = await this.prisma.refreshToken.updateMany({
+      where: { userId, familyId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+    return count > 0;
+  }
+
+  /** Every session of the user except `keepFamilyId` (all of them when it is null). */
+  async revokeAllOfUserExcept(
+    userId: string,
+    keepFamilyId: string | null,
+  ): Promise<number> {
+    const { count } = await this.prisma.refreshToken.updateMany({
+      where: {
+        userId,
+        revokedAt: null,
+        ...(keepFamilyId ? { familyId: { not: keepFamilyId } } : {}),
+      },
+      data: { revokedAt: new Date() },
+    });
+    return count;
+  }
+
   async deleteExpired(): Promise<number> {
     const { count } = await this.prisma.refreshToken.deleteMany({
       where: { expiresAt: { lt: new Date() } },

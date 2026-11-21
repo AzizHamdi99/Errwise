@@ -56,4 +56,6 @@ export interface PublicUser {
   email: string;
   name: string | null;
   createdAt: string;
+  /** False for an account created with Google that never set a password. */
+  hasPassword: boolean;
 }

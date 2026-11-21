@@ -56,3 +56,28 @@ address with a single-use, expiring link. This ADR reuses that design.
   login link. Keeping "the link sets a password, the password signs in" matches ADR-006.
 - **Keep the other sessions alive:** friendlier, but the usual reason for a reset is a password
   someone else may know. Revoking every session is the safe default.
+
+## Amendment, 2026-11-21: account settings and sessions
+
+The account page (`/account`, `modules/account`) builds on the same session model.
+
+- **A session is a refresh-token family.** Logging in starts one, every refresh rotates its token
+  (the previous one is revoked), logging out revokes the family. So a family has at most one live
+  token, and that token's `createdAt` is when the session last refreshed. No new table.
+- `GET /v1/me/sessions` lists the live families of the user, with the user agent and IP stored at
+  the last refresh. The session of the request is found from the refresh cookie's hash, and only if
+  it belongs to the same user. IPs and user agents are shown only to the user they belong to.
+- `DELETE /v1/me/sessions/:id` revokes a family scoped by user: another user's session, or one
+  already gone, answers `404`. `POST /v1/me/sessions/revoke-others` keeps the session of the request
+  and revokes the rest (all of them when the request has no live session).
+- `POST /v1/me/password` (5 calls per 10 minutes) checks the current password, saves the new one and
+  revokes every **other** session: the device that asked stays signed in. A wrong current password
+  is a `400`, never a `401`, because the web client reads `401` as "session expired". An account
+  without a password (Google) gets `409` and is pointed to the reset flow, which can set one.
+- Sessions belong to the auth module. It exports a `SessionsService` (not its repository), and the
+  account module uses it, so no service reaches into another module's repository and there is no
+  import cycle (auth already imports users).
+- The 15 minute access-token window above applies here too: a signed-out device keeps working until
+  its access token expires. The page says so ("takes effect within 15 minutes").
+- Out of scope for now: changing the email (needs a new verification), deleting the account
+  (organization ownership rules), 2FA.
