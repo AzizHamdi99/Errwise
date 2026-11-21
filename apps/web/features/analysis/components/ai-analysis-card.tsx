@@ -153,6 +153,26 @@ function Result({ analysis }: { analysis: PublicIssueAnalysis }) {
           </div>
         </div>
 
+        {analysis.reproSteps && analysis.reproSteps.length > 0 ? (
+          <div className="space-y-1.5">
+            <Eyebrow>Likely steps to reproduce (a guess)</Eyebrow>
+            <ol className="list-decimal space-y-1 pl-5 text-sm leading-6">
+              {analysis.reproSteps.map((step, index) => (
+                <li key={index} className="whitespace-pre-line">
+                  {step}
+                </li>
+              ))}
+            </ol>
+          </div>
+        ) : null}
+
+        {analysis.issueTitle ? (
+          <div className="space-y-1.5">
+            <Eyebrow>Title for a GitHub issue</Eyebrow>
+            <p className="text-sm leading-6">{analysis.issueTitle}</p>
+          </div>
+        ) : null}
+
         {analysis.framesUsed.length > 0 ? (
           <div className="space-y-1.5">
             <Eyebrow>Based on</Eyebrow>

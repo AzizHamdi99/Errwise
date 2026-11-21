@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import type { GithubIssueLink } from "@errwise/shared";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useIssueAnalysis } from "@/features/analysis/queries";
 import { getErrorMessage } from "@/lib/api";
 import { useCreateGithubIssue, useGithubConnection } from "../use-github";
 
@@ -27,6 +28,8 @@ export function GithubIssueButton({
 }: Props) {
   const connection = useGithubConnection(orgId, projectId);
   const create = useCreateGithubIssue(orgId, projectId);
+  // Same query as the analysis card, so this adds no request. `null` = nobody asked yet.
+  const analysis = useIssueAnalysis(orgId, projectId, issueId);
 
   // Already created: always a link, whatever the connection state is now.
   if (link) {
@@ -94,18 +97,25 @@ export function GithubIssueButton({
   }
 
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={onCreate}
-      disabled={create.isPending}
-    >
-      {create.isPending ? (
-        <Loader2 className="animate-spin" aria-hidden />
-      ) : (
-        <GitBranch aria-hidden />
-      )}
-      Create GitHub issue
-    </Button>
+    <>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onCreate}
+        disabled={create.isPending}
+      >
+        {create.isPending ? (
+          <Loader2 className="animate-spin" aria-hidden />
+        ) : (
+          <GitBranch aria-hidden />
+        )}
+        Create GitHub issue
+      </Button>
+      {analysis.data === null ? (
+        <span className="text-xs text-muted-foreground">
+          Run the AI analysis first for a richer GitHub issue.
+        </span>
+      ) : null}
+    </>
   );
 }
