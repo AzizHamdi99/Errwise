@@ -153,6 +153,7 @@ The SDK must never throw into, block, or slow the host app. `captureException` n
 
 - API keys: `ew_live_` + 32 random chars, shown once, stored only as SHA-256 (`keyHash`). Revoked keys and keys of deleted projects/orgs get the same `401` as unknown keys (ADR-001). Passwords use bcrypt, refresh tokens and invitation tokens are stored hashed.
 - Auth tokens travel in `httpOnly` cookies. Reusing a rotated refresh token revokes the whole family.
+- Email verification (ADR-006): registering does not sign in; login answers `403` with `code: "EMAIL_NOT_VERIFIED"` (after the password check) until the emailed link is used. The link token is random, stored only as sha256, single use and consumed with the "first one wins" delete. Verification is a `POST` from the web page, never a `GET`. The exception filter passes on a string `code` and nothing else from an exception body.
 - Webhooks: verify the HMAC on the **raw body** (`rawBody: true` in `main.ts`) with `timingSafeEqual`, before parsing anything.
 - Rate limiting: ingestion is limited per API key (in memory, per instance). Any new public or unauthenticated route needs a limit.
 - SDK input is untrusted: validate with the shared schema, cap sizes, never trust ids, levels or timestamps from the payload.
