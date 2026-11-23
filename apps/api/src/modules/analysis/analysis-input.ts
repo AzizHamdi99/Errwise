@@ -17,7 +17,7 @@ export const ANALYSIS_CACHE_VERSION = 4;
 const MAX_SNIPPET_CODE = 2_000;
 const MAX_SNIPPET_LINE = 150;
 
-function runtimeOf(context: unknown): string | undefined {
+export function runtimeOf(context: unknown): string | undefined {
   if (typeof context !== 'object' || context === null) return undefined;
   const version = (context as Record<string, unknown>).nodeVersion;
   return typeof version === 'string' && version

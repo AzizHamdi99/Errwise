@@ -3,10 +3,9 @@ import {
   HttpException,
   NotFoundException,
 } from '@nestjs/common';
-import type { ConfigService } from '@nestjs/config';
 import type { Event, Issue, IssueAnalysis } from '@prisma/client';
 import type { AnalysisResult, AnalyzeRequest } from '@errwise/shared';
-import type { Env } from '../../config/env';
+import type { AiQuotaService } from '../ai-quota/ai-quota.service';
 import type { ProjectsService } from '../projects/projects.service';
 import type { SourceContextService } from '../source-context/source-context.service';
 import type { AiClient } from './ai.client';
@@ -22,6 +21,8 @@ const RESULT: AnalysisResult = {
   promptVersion: 'v1',
   model: 'test-model',
 };
+
+const SLOT = { organizationId: 'org1', day: new Date('2026-01-01T00:00:00Z') };
 
 const ISSUE = { id: 'i1', projectId: 'p1', type: 'TypeError' } as Issue;
 const EVENT = {
@@ -47,15 +48,17 @@ function row(result: AnalysisResult = RESULT): IssueAnalysis {
   };
 }
 
-function setup(limit = 20) {
+function setup() {
   const repo = {
     findIssue: jest.fn().mockResolvedValue(ISSUE),
     latestEvent: jest.fn().mockResolvedValue(EVENT),
     findAnalysis: jest.fn().mockResolvedValue(null),
     latestAnalysis: jest.fn().mockResolvedValue(null),
     saveAnalysis: jest.fn().mockResolvedValue(row()),
-    reserve: jest.fn().mockResolvedValue(true),
-    release: jest.fn().mockResolvedValue(undefined),
+  };
+  const quota = {
+    reserve: jest.fn().mockResolvedValue(SLOT),
+    giveBack: jest.fn().mockResolvedValue(undefined),
   };
   const projects = { get: jest.fn().mockResolvedValue({}) };
   const ai = {
@@ -69,15 +72,14 @@ function setup(limit = 20) {
       .fn()
       .mockResolvedValue({ status: 'disabled', commitSha: null, frames: [] }),
   };
-  const config = { get: () => limit };
   const service = new AnalysisService(
-    config as unknown as ConfigService<Env, true>,
     repo as unknown as AnalysisRepository,
     projects as unknown as ProjectsService,
     ai as unknown as AiClient,
     sourceContext as unknown as SourceContextService,
+    quota as unknown as AiQuotaService,
   );
-  return { service, repo, projects, ai, sourceContext };
+  return { service, repo, projects, ai, sourceContext, quota };
 }
 
 describe('AnalysisService.analyze', () => {
@@ -107,14 +109,14 @@ describe('AnalysisService.analyze', () => {
   });
 
   it('returns the stored analysis for the same input without an AI call or a slot', async () => {
-    const { service, repo, ai } = setup();
+    const { service, repo, ai, quota } = setup();
     repo.findAnalysis.mockResolvedValue(row());
 
     const out = await service.analyze('org1', 'p1', 'i1');
 
     expect(out.cached).toBe(true);
     expect(ai.analyze).not.toHaveBeenCalled();
-    expect(repo.reserve).not.toHaveBeenCalled();
+    expect(quota.reserve).not.toHaveBeenCalled();
   });
 
   it('answers 404 for a project of another organization, before anything else', async () => {
@@ -140,8 +142,8 @@ describe('AnalysisService.analyze', () => {
   });
 
   it('answers 429 and makes no AI call when the daily allowance is used up', async () => {
-    const { service, repo, ai } = setup(3);
-    repo.reserve.mockResolvedValue(false);
+    const { service, ai, quota } = setup();
+    quota.reserve.mockResolvedValue(null);
 
     const error = await service
       .analyze('org1', 'p1', 'i1')
@@ -149,29 +151,19 @@ describe('AnalysisService.analyze', () => {
 
     expect(error).toBeInstanceOf(HttpException);
     expect((error as HttpException).getStatus()).toBe(429);
-    expect(repo.reserve).toHaveBeenCalledWith('org1', expect.any(Date), 3);
+    expect(quota.reserve).toHaveBeenCalledWith('org1');
     expect(ai.analyze).not.toHaveBeenCalled();
   });
 
   it('gives the slot back when the AI call fails, and keeps the real error', async () => {
-    const { service, repo, ai } = setup();
+    const { service, repo, ai, quota } = setup();
     ai.analyze.mockRejectedValue(new BadGatewayException('AI analysis failed'));
 
     await expect(service.analyze('org1', 'p1', 'i1')).rejects.toBeInstanceOf(
       BadGatewayException,
     );
-    expect(repo.release).toHaveBeenCalledWith('org1', expect.any(Date));
+    expect(quota.giveBack).toHaveBeenCalledWith(SLOT);
     expect(repo.saveAnalysis).not.toHaveBeenCalled();
-  });
-
-  it('does not hide the AI error when giving the slot back also fails', async () => {
-    const { service, repo, ai } = setup();
-    ai.analyze.mockRejectedValue(new BadGatewayException('AI analysis failed'));
-    repo.release.mockRejectedValue(new Error('db down'));
-
-    await expect(service.analyze('org1', 'p1', 'i1')).rejects.toBeInstanceOf(
-      BadGatewayException,
-    );
   });
 });
 

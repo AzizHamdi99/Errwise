@@ -1,10 +1,11 @@
 import {
   BadGatewayException,
   GatewayTimeoutException,
+  PayloadTooLargeException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
-import type { AnalyzeRequest } from '@errwise/shared';
+import type { AnalyzeRequest, FixRequest } from '@errwise/shared';
 import type { Env } from '../../config/env';
 import { AiClient } from './ai.client';
 
@@ -124,5 +125,102 @@ describe('AiClient', () => {
     await expect(client().analyze(INPUT)).rejects.toBeInstanceOf(
       BadGatewayException,
     );
+  });
+});
+
+const FIX_INPUT: FixRequest = {
+  type: 'TypeError',
+  message: 'boom',
+  environment: 'production',
+  files: [
+    {
+      file: 'src/a.js',
+      startLine: 1,
+      failingLine: 2,
+      code: 'a();\nb();\n',
+    },
+  ],
+};
+
+// The exact shape apps/ai answers for /fix.
+const FIX_GOOD = {
+  fixable: true,
+  prTitle: 'Guard the lookup',
+  explanation: 'The value can be null.',
+  confidence: 'high',
+  edits: [{ file: 'src/a.js', search: 'b();', replace: 'b?.();' }],
+  reason: '',
+  promptVersion: 'fix-v1',
+  model: 'openai/gpt-oss-120b',
+};
+
+describe('AiClient.fix', () => {
+  it('posts to /fix with the secret and returns the validated answer', async () => {
+    const fetchMock = reply(200, FIX_GOOD);
+
+    await expect(client().fix(FIX_INPUT)).resolves.toEqual(FIX_GOOD);
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('http://ai.test/fix');
+    expect((init.headers as Record<string, string>)['x-ai-secret']).toBe(
+      'a-shared-secret-123456',
+    );
+    expect(JSON.parse(init.body as string)).toEqual(FIX_INPUT);
+  });
+
+  it('accepts a refusal', async () => {
+    const refusal = {
+      ...FIX_GOOD,
+      fixable: false,
+      prTitle: '',
+      explanation: '',
+      edits: [],
+      reason: 'Not a code bug.',
+    };
+    reply(200, refusal);
+    await expect(client().fix(FIX_INPUT)).resolves.toEqual(refusal);
+  });
+
+  it.each([
+    ['not json', 'oops'],
+    ['a fixable answer without edits', { ...FIX_GOOD, edits: [] }],
+    ['a refusal that still has edits', { ...FIX_GOOD, fixable: false }],
+    ['a refusal without a reason', { ...FIX_GOOD, fixable: false, edits: [] }],
+    ['an unknown confidence', { ...FIX_GOOD, confidence: 'certain' }],
+  ])('rejects an answer that is %s', async (_name, body) => {
+    reply(200, body);
+    await expect(client().fix(FIX_INPUT)).rejects.toBeInstanceOf(
+      BadGatewayException,
+    );
+  });
+
+  it('maps a provider token limit (413) to its own friendly error', async () => {
+    reply(413, { detail: 'llm_too_large' });
+    await expect(client().fix(FIX_INPUT)).rejects.toBeInstanceOf(
+      PayloadTooLargeException,
+    );
+  });
+
+  it('keeps the other mappings: busy, timeout, bad output from the service', async () => {
+    reply(503, {});
+    await expect(client().fix(FIX_INPUT)).rejects.toBeInstanceOf(
+      ServiceUnavailableException,
+    );
+    reply(504, {});
+    await expect(client().fix(FIX_INPUT)).rejects.toBeInstanceOf(
+      GatewayTimeoutException,
+    );
+    reply(502, { detail: 'llm_bad_response' });
+    await expect(client().fix(FIX_INPUT)).rejects.toBeInstanceOf(
+      BadGatewayException,
+    );
+  });
+
+  it('refuses to call anything when disabled', async () => {
+    const fetchMock = jest.spyOn(global, 'fetch');
+    await expect(
+      client({ AI_SERVICE_URL: undefined }).fix(FIX_INPUT),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
