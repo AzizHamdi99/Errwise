@@ -56,7 +56,7 @@ Errwise should become a product developers keep using, not an MVP that stops at 
 1. Alerting: rules, channels, throttling, regression and spike detection.
 2. SDK coverage: breadcrumbs, user context, browser SDK, source maps, scrubbing, more languages.
 3. Workflow: issue states, assignment, GitHub sync (partly built).
-4. AI intelligence: root-cause analysis as a separate Python FastAPI service (`apps/ai`, built, see ADR-004). Next: eval harness, source context, suspect commits, similar issues.
+4. AI intelligence: root-cause analysis, code context and fix suggestions with draft pull requests, as a separate Python FastAPI service (`apps/ai`, built, see ADR-004, ADR-005, ADR-009). Next: eval harness for analysis, suspect commits, similar issues.
 5. Scale: retention, partitioning, rate limits that survive restarts.
 6. Ship: docs, landing page, live demo.
 
@@ -124,6 +124,8 @@ The SDK must never throw into, block, or slow the host app. `captureException` n
 - The issue content is built by a pure function (`github-issue-content.ts`): AI sections only when a stored analysis exists, fixed labels (`errwise`, `bug`, `level:*`, `env:*`), and one retry without labels on a `422`. Never retry other failures: it could create a second issue.
 - Source code on the issue page (ADR-005): opt-in per project (`Project.sourceContextEnabled`, owner only), read from GitHub on demand at the deployed `Event.commitSha`, cached in memory only, never stored. Frame paths are untrusted: only read paths that exist in the repository tree. Needs the GitHub App permission Contents: Read-only.
 - The install flow uses a signed, short-lived `state`, re-checks the owner role, and verifies the user's access to the installation. See `docs/adr/Github integration.md`.
+- Installation tokens are asked for per purpose and per repository: `getInstallationToken(installationId, purpose, repo)` with `metadata`, `issues`, `read` or `fix`. Only `fix` can write code (Contents and Pull requests, read and write). A new GitHub call takes the narrowest purpose that works, and a refused token (`GithubTokenError`) means "the installation has not accepted the permission".
+- The GitHub App needs Issues, Contents and Pull requests (read and write). Every installation owner must accept new permissions at `github.com/settings/installations`; until then only the feature that needs them says so.
 
 ## AI analysis (`modules/analysis`, `apps/ai`)
 
@@ -138,6 +140,17 @@ The SDK must never throw into, block, or slow the host app. `captureException` n
 - The feature is off until `AI_SERVICE_URL` and `AI_SERVICE_SECRET` are both set. Cost is bounded by the cache and `AI_DAILY_LIMIT_PER_ORG`.
 - In `apps/ai`, routes only know the `Analyzer` protocol (`app/analysis/base.py`). A new LLM, chain or LangGraph graph is a new class plus one line in `app/api/deps.py`.
 
+## AI fixes and pull requests (`modules/fixes`, `apps/ai` `POST /fix`, ADR-009)
+
+- Two steps, two roles. Suggest a fix: any member, one slot of the daily allowance shared with analysis (`AiQuotaService`). Open the draft pull request: owner or admin only, audited. Never automatic, never merged, never a force-push.
+- Opt-in per project: `Project.fixPullRequestsEnabled`, owner only, needs `sourceContextEnabled` (turning source code off turns it off).
+- The model answers with search/replace edits, never a diff. `fix-patch.ts` checks them against the real file (exactly one match, inside the lines the model saw, code files only, no scrubber placeholder, size caps). The pull request is built from the **stored** edits, never from the request, and they are applied again to the default branch as it is now: no match, no pull request.
+- Customer code rests only in `IssueFix.edits` (plus the scrubbed rest of its lines). Whatever withdraws consent (a switch off, GitHub disconnected or reselected, project or organization deleted) must call `wipeFixCode` in the same transaction. `saveFix` locks the project row (`FOR SHARE`), so a save and a switch-off cannot cross. Keep `scripts/verify-fix-wipe.ts` passing when you touch this.
+- Opening the pull request: atomic claim (`claimPullRequest`, 120 s), branch `errwise/fix-<fixId>` never moved (an existing one is used only if its tree is exactly the one this call builds), draft only with no fallback, a last consent check before the first irreversible call, commit message with no model text, and `Fixes #N` only for a GitHub issue of the same repository.
+- Model text in a title is stripped of `#`, `@`, backticks and `<>`. The explanation goes only in a fenced `text` block (`fix-pull-request-content.ts`). Same rule as analysis: the output is untrusted.
+- Changing the fix prompt: bump `FIX_PROMPT_VERSION` (`apps/ai/app/fixes/prompts.py`) and `FIX_CACHE_VERSION` (`fix-input.ts`) together. The contract lives twice and must change together: `packages/shared/src/fixes.ts` and `apps/ai/app/schemas/fix.py`. After changing the prompt or the model, run the eval (`uv run python -m evals.run_fix`, real provider).
+- Web (`features/fixes`): the diff is the main control, because a human reads it before a branch is pushed. Everything from the model or the repository is rendered as text, and a link that is followed must start with `https://github.com/`.
+
 ---
 
 # Database Rules and Migrations
@@ -149,6 +162,7 @@ The SDK must never throw into, block, or slow the host app. `captureException` n
 - **Deploy order: migrate production first (`yarn db:migrate:prod`), then deploy the code.** So a migration must be backward compatible with the code currently running: add columns as nullable or with a default, and split a destructive change (drop, rename, NOT NULL) into two deploys.
 - `db:migrate:prod` and `db:status:prod` read `apps/api/.env.production`. Never run `migrate dev`, `db:reset` or `prisma migrate reset` with production credentials, and never print that file.
 - Prefer soft deletes and preserve history. Retention is per project (`retentionDays`).
+- Anything that stores customer code needs a wipe in the same transaction as every change that withdraws the consent for it (see AI fixes). Never store a whole file.
 
 ---
 
@@ -233,6 +247,7 @@ yarn workspace @errwise/api format          # prettier
 yarn workspace @errwise/node test           # vitest
 yarn workspace @errwise/node typecheck
 yarn workspace @errwise/shared build
+yarn workspace @errwise/api exec tsx --env-file=.env scripts/verify-fix-wipe.ts   # real local database, refuses a remote one
 ```
 
 AI service (`apps/ai`, run from that folder with `uv`):
@@ -242,6 +257,7 @@ uv sync
 uv run uvicorn app.main:app --reload --port 8000
 uv run pytest
 uv run ruff check . && uv run ruff format --check .
+uv run python -m evals.run_fix            # 12 bugs against the real provider, one call every 40 s
 ```
 
 CI (`.github/workflows/ci.yml`) builds shared, generates Prisma, builds the API. It does not run tests or lint yet.

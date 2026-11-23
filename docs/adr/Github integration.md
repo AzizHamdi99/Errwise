@@ -97,6 +97,10 @@ Each rule is a single `updateMany` with the status in the `where`, so it is atom
   - `RegressionNotifier`: the email. Dedupe compares `lastRegressionNotifiedAt` with `lastRegressionAt`, so a retry never sends a duplicate and a new regression always sends a new email. It throws if no email could be sent, so the queue retries.
   - `GithubRegressionSync`: never throws. It claims `githubState: closed -> open`, reopens the GitHub issue, then comments. If the reopen call fails, the claim is released.
 
+### 4.5 AI fix pull requests
+
+Errwise can also open a **draft pull request** with an AI-suggested change. It is a separate, opt-in feature with its own role rules and storage, described in `009-ai-fix-pull-requests.md`. What matters here: it is the only place that writes to the repository, it uses the `fix` token (below), and the branch is `errwise/fix-<fixId>`.
+
 ## 5. Security
 
 - The webhook is public by design. The HMAC signature replaces authentication, and no user guards are on it.
@@ -104,6 +108,7 @@ Each rule is a single `updateMany` with the status in the `where`, so it is atom
 - All queries are scoped by organization or project. A project from another tenant returns 404.
 - The GitHub client never logs tokens or response bodies. Installation tokens are cached in memory with a 5-minute safety margin.
 - SDK-provided text is never interpreted as markdown in GitHub content.
+- **Installation tokens are narrow.** Each call asks GitHub for a token with only the permissions of its purpose, for one repository: `metadata` (list repositories), `issues` (create, reopen, comment), `read` (Contents: read, for source code) and `fix` (Contents and Pull requests: write). A bug or a leak on the issue or read paths can never write code. The cache is keyed by installation, purpose and repository.
 
 ## 6. Environment variables
 
@@ -122,7 +127,9 @@ In queue mode the worker also needs the `GITHUB_*` variables, because it loads t
 ## 7. GitHub App settings
 
 - Repository permission **Issues: Read & write**.
-- Repository permission **Contents: Read-only**, for the optional source code feature (ADR-005). Add it in GitHub, under Settings, Developer settings, GitHub Apps, your app, Permissions & events. Every existing installation then has to **accept** the new permission at `github.com/settings/installations`; until it does, reading code fails with `no_permission` and nothing else is affected.
+- Repository permission **Contents: Read and write**: read for the optional source code feature (ADR-005), write for AI fix pull requests (ADR-009). Add it in GitHub, under Settings, Developer settings, GitHub Apps, your app, Permissions & events.
+- Repository permission **Pull requests: Read and write**, for AI fix pull requests (ADR-009).
+- Every existing installation then has to **accept** the new permissions at `github.com/settings/installations`. Saving the App is not enough. Until an installation accepts, reading code fails with `no_permission` and opening a pull request answers "GitHub has not given Errwise permission"; nothing else is affected.
 - **Subscribe to events: Issues**. After a permission change, the installation owner must accept it at `github.com/settings/installations`, otherwise no events are sent.
 - Webhook URL: `https://<api>/github/webhook` in production. An app has **one** webhook URL, so for local work point it to a smee.io channel (`npx smee-client --url <channel> --target http://localhost:4000/github/webhook`) or create a second "Errwise Dev" app.
 
@@ -164,3 +171,4 @@ In queue mode the worker also needs the `GITHUB_*` variables, because it loads t
 - The comment after a successful reopen is not retried if it fails.
 - Not done on purpose: assignees and comments live in GitHub. A possible later addition is copying an Errwise owner to the GitHub assignee.
 - Next in M1: hourly email cap per project, snooze and "ignore until N events", spike detection.
+- AI fix pull requests: a pull request that was merged or closed on GitHub is not tracked (no `pull_request` webhook yet), and a fix is not regenerated with feedback.
