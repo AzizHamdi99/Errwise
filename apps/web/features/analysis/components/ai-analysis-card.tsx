@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2, ShieldCheck, Sparkles, TriangleAlert } from "lucide-react";
-import type { AnalysisConfidence, PublicIssueAnalysis } from "@errwise/shared";
+import type { PublicIssueAnalysis } from "@errwise/shared";
 import { CopyButton } from "@/components/shared/copy-button";
 import { Eyebrow } from "@/components/shared/eyebrow";
 import { Button } from "@/components/ui/button";
@@ -9,25 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError, getErrorMessage } from "@/lib/api";
 import { formatRelative } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { CONFIDENCE } from "../confidence";
 import { useAnalyzeIssue, useIssueAnalysis } from "../queries";
-
-const CONFIDENCE: Record<AnalysisConfidence, { label: string; style: string }> =
-  {
-    low: {
-      label: "Low confidence",
-      style:
-        "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
-    },
-    medium: {
-      label: "Medium confidence",
-      style: "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300",
-    },
-    high: {
-      label: "High confidence",
-      style:
-        "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
-    },
-  };
 
 /**
  * The API's messages for these statuses are written for people ("AI is busy right
