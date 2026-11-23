@@ -20,3 +20,10 @@ class LLMBadResponse(AnalysisError):
 
     code = "llm_bad_response"
     status_code = 502
+
+
+class LLMTooLarge(AnalysisError):
+    """The request is bigger than the provider accepts right now (per-minute token limit)."""
+
+    code = "llm_too_large"
+    status_code = 413

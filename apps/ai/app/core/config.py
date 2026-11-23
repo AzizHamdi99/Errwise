@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     llm_timeout_seconds: float = Field(default=30.0, gt=0, le=120)
     llm_max_output_tokens: int = Field(default=1_500, gt=0, le=8_000)
 
+    # Fix suggestions write code, so they may use a stronger model (ADR-009). Falls back to
+    # llm_model. The output budget is the free plan's 8,000 tokens a minute minus the prompt.
+    llm_fix_model: str | None = None
+    llm_fix_max_output_tokens: int = Field(default=2_500, gt=0, le=8_000)
+
 
 @lru_cache
 def get_settings() -> Settings:
