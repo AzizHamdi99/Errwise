@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { Organization, Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
+import { wipeFixCode } from '../fixes/fix-wipe';
 
 export type MembershipWithOrganization = Prisma.MembershipGetPayload<{
   include: { organization: true };
@@ -44,9 +45,13 @@ export class OrganizationsRepository {
   }
 
   async softDelete(id: string): Promise<void> {
-    await this.prisma.organization.update({
-      where: { id },
-      data: { deletedAt: new Date() },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.organization.update({
+        where: { id },
+        data: { deletedAt: new Date() },
+      });
+      // The code of the AI fixes does not outlive the organization (ADR-009).
+      await wipeFixCode(tx, { organizationId: id });
     });
   }
 }

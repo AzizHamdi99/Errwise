@@ -13,12 +13,18 @@ SECRET = "test-secret-at-least-16-chars"
 
 
 def make_settings(**overrides: object) -> Settings:
+    # Every setting a test relies on is pinned, and the developer's .env is not read: otherwise a
+    # model or a budget set there would change what the tests see.
     values: dict[str, object] = {
         "ai_service_secret": SECRET,
         "llm_api_key": "test-llm-key",
         "llm_model": "test-model",
+        "llm_base_url": "https://api.groq.com/openai/v1",
+        "llm_max_output_tokens": 1_500,
+        "llm_fix_model": None,
+        "llm_fix_max_output_tokens": 2_500,
     }
-    return Settings(**(values | overrides))  # type: ignore[arg-type]
+    return Settings(_env_file=None, **(values | overrides))  # type: ignore[arg-type, call-arg]
 
 
 @pytest.fixture

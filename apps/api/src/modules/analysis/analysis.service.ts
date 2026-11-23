@@ -5,13 +5,12 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import type {
   AnalysisResult,
   PublicIssueAnalysis,
   SourceSnippet,
 } from '@errwise/shared';
-import type { Env } from '../../config/env';
+import { AiQuotaService } from '../ai-quota/ai-quota.service';
 import { ProjectsService } from '../projects/projects.service';
 import { SourceContextService } from '../source-context/source-context.service';
 import { AiClient } from './ai.client';
@@ -23,27 +22,17 @@ import {
 import { toPublicAnalysis } from './analysis.mapper';
 import { AnalysisRepository } from './analysis.repository';
 
-/** The allowance resets at midnight UTC. */
-function utcDay(now: Date): Date {
-  return new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-  );
-}
-
 @Injectable()
 export class AnalysisService {
   private readonly logger = new Logger(AnalysisService.name);
-  private readonly dailyLimit: number;
 
   constructor(
-    config: ConfigService<Env, true>,
     private readonly repo: AnalysisRepository,
     private readonly projects: ProjectsService,
     private readonly ai: AiClient,
     private readonly sourceContext: SourceContextService,
-  ) {
-    this.dailyLimit = config.get('AI_DAILY_LIMIT_PER_ORG', { infer: true });
-  }
+    private readonly quota: AiQuotaService,
+  ) {}
 
   /** The latest analysis of the issue, or 404 when nobody asked for one yet. */
   async get(
@@ -83,13 +72,8 @@ export class AnalysisService {
     const cached = await this.repo.findAnalysis(issue.id, inputHash);
     if (cached) return toPublicAnalysis(cached, true);
 
-    const day = utcDay(new Date());
-    const reserved = await this.repo.reserve(
-      organizationId,
-      day,
-      this.dailyLimit,
-    );
-    if (!reserved) {
+    const slot = await this.quota.reserve(organizationId);
+    if (!slot) {
       throw new HttpException(
         'Daily AI analysis limit reached, try again tomorrow',
         HttpStatus.TOO_MANY_REQUESTS,
@@ -100,7 +84,7 @@ export class AnalysisService {
     try {
       result = await this.ai.analyze(input);
     } catch (error) {
-      await this.giveBack(organizationId, day);
+      await this.quota.giveBack(slot);
       throw error;
     }
 
@@ -150,14 +134,5 @@ export class AnalysisService {
     const issue = await this.repo.findIssue(projectId, issueId);
     if (!issue) throw new NotFoundException('Issue not found');
     return issue;
-  }
-
-  /** Never hides the real error: a failed refund is only logged. */
-  private async giveBack(organizationId: string, day: Date): Promise<void> {
-    try {
-      await this.repo.release(organizationId, day);
-    } catch {
-      this.logger.warn('Could not give back an AI slot');
-    }
   }
 }

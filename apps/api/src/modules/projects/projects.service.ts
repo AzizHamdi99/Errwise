@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -24,6 +25,7 @@ interface ProjectFields {
   platform: string;
   retentionDays: number;
   sourceContextEnabled: boolean;
+  fixPullRequestsEnabled: boolean;
 }
 
 @Injectable()
@@ -90,7 +92,10 @@ export class ProjectsService {
   ): Promise<PublicProject> {
     // 404 if missing, deleted or in another organization
     const before = await this.getOrThrow(organizationId, id);
-    const project = await this.repo.update(id, input);
+    const project = await this.repo.update(
+      id,
+      this.applyFixRules(before, input),
+    );
     await this.recordUpdate(organizationId, actorId, before, project);
     return toPublicProject(project);
   }
@@ -111,6 +116,28 @@ export class ProjectsService {
       projectId: id,
       metadata: { name: project.name },
     });
+  }
+
+  /**
+   * AI fixes (ADR-009) read and write code, so they need the source code switch: they cannot be
+   * turned on without it, and turning it off turns them off. The check and the forced change
+   * are made here, and the stored fixes are wiped by the repository in the same transaction.
+   */
+  private applyFixRules(
+    before: ProjectFields,
+    input: UpdateProjectInput,
+  ): UpdateProjectInput {
+    const sourceEnabled =
+      input.sourceContextEnabled ?? before.sourceContextEnabled;
+    if (input.fixPullRequestsEnabled === true && !sourceEnabled) {
+      throw new BadRequestException(
+        'Turn on source code before turning on AI fix pull requests',
+      );
+    }
+    if (input.sourceContextEnabled === false) {
+      return { ...input, fixPullRequestsEnabled: false };
+    }
+    return input;
   }
 
   /**
@@ -136,6 +163,15 @@ export class ProjectsService {
         action: after.sourceContextEnabled
           ? 'project.source_context_enabled'
           : 'project.source_context_disabled',
+        metadata: { name: after.name },
+      });
+    }
+    if (before.fixPullRequestsEnabled !== after.fixPullRequestsEnabled) {
+      await this.audit.record({
+        ...base,
+        action: after.fixPullRequestsEnabled
+          ? 'project.fix_pull_requests_enabled'
+          : 'project.fix_pull_requests_disabled',
         metadata: { name: after.name },
       });
     }

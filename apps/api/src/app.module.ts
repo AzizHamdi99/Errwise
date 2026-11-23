@@ -26,6 +26,7 @@ import { GithubModule } from './modules/github/github.module';
 import { AnalysisModule } from './modules/analysis/analysis.module';
 import { SourceContextModule } from './modules/source-context/source-context.module';
 import { StatsModule } from './modules/stats/stats.module';
+import { FixesModule } from './modules/fixes/fixes.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { StatsModule } from './modules/stats/stats.module';
     GithubModule,
     AnalysisModule,
     SourceContextModule,
+    FixesModule,
     StatsModule,
   ],
   controllers: [AppController],

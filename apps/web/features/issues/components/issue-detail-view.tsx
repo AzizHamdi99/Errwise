@@ -19,6 +19,7 @@ import { IssueStatusBadge, issueStatusMeta } from "./issue-status-badge";
 import { IssueStatusControl } from "./issue-status-control";
 import { RecentEventsCard } from "./recent-events-card";
 import { AiAnalysisCard } from "@/features/analysis/components/ai-analysis-card";
+import { SuggestedFixCard } from "@/features/fixes/components/suggested-fix-card";
 import { IssueActivityCard } from "@/features/stats/components/issue-activity-card";
 import { StackTraceWithSource } from "@/features/source-context/components/stack-trace-with-source";
 import { GithubIssueButton } from "@/features/github/components/github-issue-button";
@@ -249,6 +250,16 @@ export function IssueDetailView() {
               projectId={projectId}
               issueId={issue.id}
               includesCode={project.sourceContextEnabled}
+            />
+            <SuggestedFixCard
+              orgId={orgId}
+              projectId={projectId}
+              issueId={issue.id}
+              enabled={project.fixPullRequestsEnabled}
+              sourceEnabled={project.sourceContextEnabled}
+              canManage={can(org.role, "project.write")}
+              canOpen={can(org.role, "fix.openPullRequest")}
+              integrationsHref={`/organizations/${orgId}/projects/${projectId}/integrations`}
             />
             <StackTraceWithSource
               key={selected.id}

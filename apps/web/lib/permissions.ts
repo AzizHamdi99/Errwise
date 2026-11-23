@@ -6,6 +6,7 @@ const RULES = {
   "project.write": ["owner"],
   "apiKey.write": ["owner"],
   "github.manage": ["owner"],
+  "fix.openPullRequest": ["owner", "admin"],
   "invitation.manage": ["owner", "admin"],
   "member.changeRole": ["owner"],
   "member.remove": ["owner", "admin"],

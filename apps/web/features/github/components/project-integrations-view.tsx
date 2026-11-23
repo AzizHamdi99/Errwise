@@ -2,6 +2,7 @@
 
 import { ProjectPageHeader } from "@/features/projects/components/project-page-header";
 import { useCurrentProject } from "@/features/projects/use-current-project";
+import { FixPullRequestsCard } from "@/features/fixes/components/fix-pull-requests-card";
 import { SourceContextCard } from "@/features/source-context/components/source-context-card";
 import { can } from "@/lib/permissions";
 import { GithubIntegrationCard } from "./github-integration-card";
@@ -30,6 +31,15 @@ export function ProjectIntegrationsView() {
           orgId={org.id}
           projectId={project.id}
           enabled={project.sourceContextEnabled}
+          fixesEnabled={project.fixPullRequestsEnabled}
+          canManage={can(org.role, "project.write")}
+        />
+        <FixPullRequestsCard
+          key={`fixes-${project.id}`}
+          orgId={org.id}
+          projectId={project.id}
+          enabled={project.fixPullRequestsEnabled}
+          sourceEnabled={project.sourceContextEnabled}
           canManage={can(org.role, "project.write")}
         />
       </div>

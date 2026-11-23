@@ -10,6 +10,7 @@ export function toPublicProject(project: Project): PublicProject {
     platform: project.platform,
     retentionDays: project.retentionDays,
     sourceContextEnabled: project.sourceContextEnabled,
+    fixPullRequestsEnabled: project.fixPullRequestsEnabled,
     createdAt: project.createdAt.toISOString(),
   };
 }

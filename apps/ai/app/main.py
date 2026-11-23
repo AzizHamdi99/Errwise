@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app.analysis.errors import AnalysisError
-from app.api.routes import analysis, health
+from app.api.routes import analysis, fix, health
 
 
 async def analysis_error_handler(_: Request, error: Exception) -> JSONResponse:
@@ -18,6 +18,7 @@ def create_app() -> FastAPI:
     app.add_exception_handler(AnalysisError, analysis_error_handler)
     app.include_router(health.router)
     app.include_router(analysis.router)
+    app.include_router(fix.router)
     return app
 
 

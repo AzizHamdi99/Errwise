@@ -157,16 +157,16 @@ function labelFor(prefix: string, value: string | null | undefined) {
   return cleaned ? `${prefix}:${cleaned}`.slice(0, MAX_LABEL_CHARS) : null;
 }
 
-function truncate(text: string, max: number): string {
+export function truncate(text: string, max: number): string {
   return text.length > max ? `${text.slice(0, max - 1)}…` : text;
 }
 
-function oneLine(text: string): string {
+export function oneLine(text: string): string {
   return stripControl(text).replace(/\s+/g, ' ').trim();
 }
 
 /** Keeps newlines and tabs, drops the rest of the control characters (and CR). */
-function stripControl(text: string): string {
+export function stripControl(text: string): string {
   return (
     text
       .replace(/\r/g, '')
@@ -176,7 +176,7 @@ function stripControl(text: string): string {
 }
 
 /** Breaks lines at spaces. A word longer than a line is cut, so no line is unbounded. */
-function wrap(text: string, columns: number): string {
+export function wrap(text: string, columns: number): string {
   return text
     .split('\n')
     .map((line) => wrapLine(line, columns))
@@ -210,12 +210,12 @@ function wrapLine(line: string, columns: number): string {
 }
 
 /** Inline code keeps SDK-provided values from becoming markdown or @mentions. */
-function cell(value: string): string {
+export function cell(value: string): string {
   return `\`${value.replace(/[`|\r\n]+/g, ' ').slice(0, MAX_CELL_CHARS)}\``;
 }
 
 /** The fence is longer than any backtick run inside, so the text cannot break out. */
-function codeBlock(text: string, language = ''): string {
+export function codeBlock(text: string, language = ''): string {
   const runs: string[] = text.match(/`+/g) ?? [];
   const longestRun = runs.reduce((max, run) => Math.max(max, run.length), 0);
   const fence = '`'.repeat(Math.max(3, longestRun + 1));

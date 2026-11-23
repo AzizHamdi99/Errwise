@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import type { Event, Issue, IssueAnalysis } from '@prisma/client';
+import { wipeFixCode } from '../fixes/fix-wipe';
 
 export interface GithubProjectLink {
   id: string;
@@ -23,33 +24,51 @@ export class GithubRepository {
     });
   }
 
-  /** A new installation invalidates any previously chosen repo. */
+  /**
+   * A new installation invalidates any previously chosen repo. Fix suggestions were made for
+   * the old one, so their code goes too (ADR-009), in the same transaction.
+   */
   async saveInstallation(
     projectId: string,
     installationId: string,
   ): Promise<void> {
-    await this.prisma.project.update({
-      where: { id: projectId },
-      data: { githubInstallationId: installationId, githubRepo: null },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.project.update({
+        where: { id: projectId },
+        data: { githubInstallationId: installationId, githubRepo: null },
+      });
+      await wipeFixCode(tx, { projectId });
     });
   }
 
+  /**
+   * Always wipes, even when the same repository is chosen again: reselecting is rare, and a
+   * comparison here could only be stale.
+   */
   async saveRepo(projectId: string, repo: string): Promise<void> {
-    await this.prisma.project.update({
-      where: { id: projectId },
-      data: { githubRepo: repo },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.project.update({
+        where: { id: projectId },
+        data: { githubRepo: repo },
+      });
+      await wipeFixCode(tx, { projectId });
     });
   }
 
   async disconnect(projectId: string): Promise<void> {
-    await this.prisma.project.update({
-      where: { id: projectId },
-      // Disconnecting also withdraws the consent to read code from that repository.
-      data: {
-        githubInstallationId: null,
-        githubRepo: null,
-        sourceContextEnabled: false,
-      },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.project.update({
+        where: { id: projectId },
+        // Disconnecting also withdraws the consent to read code from that repository, and
+        // the one to write to it.
+        data: {
+          githubInstallationId: null,
+          githubRepo: null,
+          sourceContextEnabled: false,
+          fixPullRequestsEnabled: false,
+        },
+      });
+      await wipeFixCode(tx, { projectId });
     });
   }
   /** Scoped by project and organization, so another tenant's issue returns null. */

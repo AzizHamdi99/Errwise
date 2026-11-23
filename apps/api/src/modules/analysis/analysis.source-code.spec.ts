@@ -1,4 +1,3 @@
-import type { ConfigService } from '@nestjs/config';
 import type { Event, Issue, IssueAnalysis } from '@prisma/client';
 import type {
   AnalysisResult,
@@ -6,7 +5,7 @@ import type {
   SourceContextResult,
   SourceFrame,
 } from '@errwise/shared';
-import type { Env } from '../../config/env';
+import type { AiQuotaService } from '../ai-quota/ai-quota.service';
 import type { ProjectsService } from '../projects/projects.service';
 import type { SourceContextService } from '../source-context/source-context.service';
 import type { AiClient } from './ai.client';
@@ -61,8 +60,6 @@ function setup() {
     saveAnalysis: jest
       .fn<Promise<IssueAnalysis>, [SaveAnalysisData]>()
       .mockResolvedValue(storedRow()),
-    reserve: jest.fn().mockResolvedValue(true),
-    release: jest.fn().mockResolvedValue(undefined),
   };
   const ai = {
     analyze: jest
@@ -77,12 +74,19 @@ function setup() {
       frames: [],
     }),
   };
+  const quota = {
+    reserve: jest.fn().mockResolvedValue({
+      organizationId: 'org1',
+      day: new Date('2026-01-01T00:00:00Z'),
+    }),
+    giveBack: jest.fn().mockResolvedValue(undefined),
+  };
   const service = new AnalysisService(
-    { get: () => 20 } as unknown as ConfigService<Env, true>,
     repo as unknown as AnalysisRepository,
     { get: jest.fn().mockResolvedValue({}) } as unknown as ProjectsService,
     ai as unknown as AiClient,
     sourceContext as unknown as SourceContextService,
+    quota as unknown as AiQuotaService,
   );
   return { service, repo, ai, sourceContext };
 }

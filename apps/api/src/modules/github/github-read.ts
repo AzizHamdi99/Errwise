@@ -16,6 +16,11 @@ export interface RepoFile {
   /** Git blob id: the content never changes for a given id. */
   sha: string;
   size: number;
+  /**
+   * Git file mode: "100644" a file, "100755" an executable, "120000" a symlink, "160000" a
+   * submodule. Writing a file back needs it, and only the first two may be written.
+   */
+  mode?: string;
 }
 
 export interface RepoTree {
@@ -27,6 +32,16 @@ export interface RepoTree {
 
 export type BlobText =
   { kind: 'text'; text: string } | { kind: 'binary' } | { kind: 'too_large' };
+
+/**
+ * A file read to be written back: every byte counts, so unlike BlobText the byte order mark
+ * stays in the text, and bytes that are not UTF-8 are a refusal, never a replacement character.
+ */
+export type ExactBlob =
+  | { kind: 'text'; text: string }
+  | { kind: 'binary' }
+  | { kind: 'too_large' }
+  | { kind: 'invalid_utf8' };
 
 export const MAX_BLOB_BYTES = 512 * 1024;
 

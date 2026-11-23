@@ -21,6 +21,11 @@ export const updateProjectSchema = z
     retentionDays: retentionDays.optional(),
     /** Owner opt-in: read the code around stack frames from the connected GitHub repo. */
     sourceContextEnabled: z.boolean().optional(),
+    /**
+     * Owner opt-in (ADR-009): suggest a code fix and open a draft pull request for it. Needs
+     * source code on, and turning source code off turns this off too.
+     */
+    fixPullRequestsEnabled: z.boolean().optional(),
   })
   .refine((v) => Object.values(v).some((x) => x !== undefined), {
     message: "Provide at least one field to update",
@@ -37,5 +42,6 @@ export interface PublicProject {
   platform: string;
   retentionDays: number;
   sourceContextEnabled: boolean;
+  fixPullRequestsEnabled: boolean;
   createdAt: string;
 }

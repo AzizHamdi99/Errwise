@@ -3,11 +3,18 @@ import {
   GatewayTimeoutException,
   Injectable,
   Logger,
+  PayloadTooLargeException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { analysisResultSchema } from '@errwise/shared';
-import type { AnalysisResult, AnalyzeRequest } from '@errwise/shared';
+import type { ZodType } from 'zod';
+import { analysisResultSchema, fixResultSchema } from '@errwise/shared';
+import type {
+  AnalysisResult,
+  AnalyzeRequest,
+  FixRequest,
+  FixResult,
+} from '@errwise/shared';
 import type { Env } from '../../config/env';
 
 /**
@@ -31,14 +38,27 @@ export class AiClient {
     return Boolean(this.url && this.secret);
   }
 
-  async analyze(input: AnalyzeRequest): Promise<AnalysisResult> {
+  analyze(input: AnalyzeRequest): Promise<AnalysisResult> {
+    return this.call('/analyze', input, analysisResultSchema);
+  }
+
+  /** A code fix for an error (ADR-009). The edits are not trusted yet: see fix-patch.ts. */
+  fix(input: FixRequest): Promise<FixResult> {
+    return this.call('/fix', input, fixResultSchema);
+  }
+
+  private async call<T>(
+    path: string,
+    input: unknown,
+    schema: ZodType<T>,
+  ): Promise<T> {
     if (!this.url || !this.secret) {
       throw new ServiceUnavailableException('AI analysis is not configured');
     }
 
     let res: Response;
     try {
-      res = await fetch(`${this.url.replace(/\/$/, '')}/analyze`, {
+      res = await fetch(`${this.url.replace(/\/$/, '')}${path}`, {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
@@ -64,12 +84,18 @@ export class AiClient {
     if (res.status === 504) {
       throw new GatewayTimeoutException('AI analysis timed out');
     }
+    if (res.status === 413) {
+      // The provider counts the request against a per-minute token limit.
+      throw new PayloadTooLargeException(
+        'The AI cannot take this much code right now, try again in a minute',
+      );
+    }
     if (!res.ok) {
       this.logger.warn(`AI service answered ${res.status}`);
       throw new BadGatewayException('AI analysis failed');
     }
 
-    const parsed = analysisResultSchema.safeParse(await this.readJson(res));
+    const parsed = schema.safeParse(await this.readJson(res));
     if (!parsed.success) {
       this.logger.warn('AI service answered with an unexpected shape');
       throw new BadGatewayException('AI analysis failed');

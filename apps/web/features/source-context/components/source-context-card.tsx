@@ -13,6 +13,8 @@ interface Props {
   orgId: string;
   projectId: string;
   enabled: boolean;
+  /** AI fix pull requests are on: turning source code off turns them off too. */
+  fixesEnabled?: boolean;
   /** Owner only. Everyone else sees the state but cannot change it. */
   canManage: boolean;
 }
@@ -27,6 +29,7 @@ export function SourceContextCard({
   orgId,
   projectId,
   enabled,
+  fixesEnabled = false,
   canManage,
 }: Props) {
   const connection = useGithubConnection(orgId, projectId);
@@ -89,6 +92,12 @@ export function SourceContextCard({
           must also report its commit: use <code>@errwise/node</code> 0.2.0 or
           set <code>ERRWISE_COMMIT_SHA</code>.
         </p>
+
+        {enabled && fixesEnabled ? (
+          <p className="text-xs text-muted-foreground">
+            Turning this off also turns off AI fix pull requests, which need it.
+          </p>
+        ) : null}
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="flex items-center gap-2 text-sm font-medium">
