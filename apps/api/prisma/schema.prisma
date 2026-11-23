@@ -25,6 +25,7 @@ model User {
   emailVerification EmailVerification?
   passwordReset     PasswordReset?
   auditEntries      AuditLog[]
+  fixesOpened       IssueFix[]
 }
 
 /// The pending email verification of a user. userId is the primary key, so there is at most one
@@ -78,25 +79,28 @@ model Membership {
 }
 
 model Project {
-  id                   String                @id @default(uuid(7)) @db.Uuid
-  organizationId       String                @db.Uuid
-  name                 String
-  slug                 String
-  platform             String                @default("node")
-  retentionDays        Int                   @default(30)
+  id                     String                @id @default(uuid(7)) @db.Uuid
+  organizationId         String                @db.Uuid
+  name                   String
+  slug                   String
+  platform               String                @default("node")
+  retentionDays          Int                   @default(30)
   /// Opt-in. Show and analyze the code around stack frames, read from the connected repo.
-  sourceContextEnabled Boolean               @default(false)
-  createdAt            DateTime              @default(now()) @db.Timestamptz(3)
-  updatedAt            DateTime              @updatedAt @db.Timestamptz(3)
-  deletedAt            DateTime?             @db.Timestamptz(3)
-  organization         Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  githubInstallationId String?
-  githubRepo           String?
-  apiKeys              ApiKey[]
-  issues               Issue[]
-  events               Event[]
-  subscriptions        ProjectSubscription[]
-  issueEnvironments    IssueEnvironment[]
+  sourceContextEnabled   Boolean               @default(false)
+  /// Opt-in, owner only, needs sourceContextEnabled. Lets Errwise suggest a code fix and open a
+  /// draft pull request for it (ADR-009). Consent to read code is not consent to write to it.
+  fixPullRequestsEnabled Boolean               @default(false)
+  createdAt              DateTime              @default(now()) @db.Timestamptz(3)
+  updatedAt              DateTime              @updatedAt @db.Timestamptz(3)
+  deletedAt              DateTime?             @db.Timestamptz(3)
+  organization           Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  githubInstallationId   String?
+  githubRepo             String?
+  apiKeys                ApiKey[]
+  issues                 Issue[]
+  events                 Event[]
+  subscriptions          ProjectSubscription[]
+  issueEnvironments      IssueEnvironment[]
 
   @@unique([organizationId, slug])
   @@index([githubRepo])
@@ -185,6 +189,7 @@ model Issue {
   project                  Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
   events                   Event[]
   analyses                 IssueAnalysis[]
+  fixes                    IssueFix[]
   environments             IssueEnvironment[]
 
   @@unique([projectId, githubIssueNumber])
@@ -271,6 +276,41 @@ model IssueAnalysis {
   issue         Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
 
   @@unique([issueId, inputHash])
+}
+
+/// One suggested code fix per issue and input (ADR-009). The key is a hash of the scrubbed input
+/// and the code windows, so the same error and code never cost a second AI call.
+///
+/// `edits` is the only place where customer code can rest: small search/replace pairs, never whole
+/// files. It is set to null (and `result` stripped of its text) when either switch is turned off,
+/// GitHub is disconnected or the repository changes. The PR link outlives that.
+/// `repo` and `installationId` record where the fix was made, so a PR is never opened somewhere else.
+model IssueFix {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  issueId        String    @db.Uuid
+  inputHash      String
+  promptVersion  String
+  model          String
+  repo           String
+  installationId String
+  commitSha      String
+  /// Everything but the edits: fixable, title, explanation, confidence, reason, files read.
+  result         Json
+  edits          Json?
+  /// Short lock while the pull request is being opened (60 s TTL), like Issue.githubIssueClaimedAt.
+  prClaimedAt    DateTime? @db.Timestamptz(3)
+  prNumber       Int?
+  prUrl          String?
+  prOpenedById   String?   @db.Uuid
+  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
+  issue          Issue     @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  prOpenedBy     User?     @relation(fields: [prOpenedById], references: [id], onDelete: SetNull)
+
+  @@unique([issueId, inputHash])
+  /// Database backstop for "one pull request per fix": a PR number belongs to one row. Nulls do
+  /// not collide, so fixes without a PR are unaffected.
+  @@unique([repo, prNumber])
+  @@index([issueId, createdAt(sort: Desc)])
 }
 
 /// AI calls made by an organization on one UTC day. The daily cap is enforced with an
