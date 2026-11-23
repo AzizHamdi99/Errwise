@@ -12,6 +12,7 @@ export * from "./subscriptions";
 export * from "./messaging";
 export * from "./github";
 export * from "./analysis";
+export * from "./fixes";
 export * from "./stack-trace";
 export * from "./source-context";
 export * from "./stats";

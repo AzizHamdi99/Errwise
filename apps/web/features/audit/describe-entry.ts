@@ -15,6 +15,9 @@ export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
   "project.deleted": "Project deleted",
   "project.source_context_enabled": "Source code turned on",
   "project.source_context_disabled": "Source code turned off",
+  "project.fix_pull_requests_enabled": "AI fix pull requests turned on",
+  "project.fix_pull_requests_disabled": "AI fix pull requests turned off",
+  "fix.pull_request_opened": "Pull request opened for an AI fix",
   "github.connected": "GitHub connected",
   "github.repo_selected": "GitHub repository selected",
   "github.disconnected": "GitHub disconnected",
@@ -81,6 +84,12 @@ export function describeEntry(
       return `Turned source code on for ${project}`;
     case "project.source_context_disabled":
       return `Turned source code off for ${project}`;
+    case "project.fix_pull_requests_enabled":
+      return `Allowed AI fix pull requests for ${project}`;
+    case "project.fix_pull_requests_disabled":
+      return `Turned AI fix pull requests off for ${project}`;
+    case "fix.pull_request_opened":
+      return `Opened pull request #${typeof m.number === "number" ? m.number : "?"} with an AI fix in ${text(m.repo) ?? project}`;
     case "github.connected":
       return `Connected GitHub to ${projectName ?? "a project"}`;
     case "github.repo_selected":
