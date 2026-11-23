@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { Project } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
+import { wipeFixCode } from '../fixes/fix-wipe';
 
 export interface CreateProjectData {
   organizationId: string;
@@ -15,6 +16,7 @@ export interface UpdateProjectData {
   platform?: string;
   retentionDays?: number;
   sourceContextEnabled?: boolean;
+  fixPullRequestsEnabled?: boolean;
 }
 
 @Injectable()
@@ -48,14 +50,31 @@ export class ProjectsRepository {
     });
   }
 
+  /**
+   * Turning source code or fixes off removes the code of the stored fixes in the same
+   * transaction (ADR-009): the consent they were made under is gone.
+   */
   update(id: string, data: UpdateProjectData): Promise<Project> {
-    return this.prisma.project.update({ where: { id }, data });
+    const withdrawsConsent =
+      data.sourceContextEnabled === false ||
+      data.fixPullRequestsEnabled === false;
+    if (!withdrawsConsent) {
+      return this.prisma.project.update({ where: { id }, data });
+    }
+    return this.prisma.$transaction(async (tx) => {
+      const project = await tx.project.update({ where: { id }, data });
+      await wipeFixCode(tx, { projectId: id });
+      return project;
+    });
   }
 
   async softDelete(id: string): Promise<void> {
-    await this.prisma.project.update({
-      where: { id },
-      data: { deletedAt: new Date() },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.project.update({
+        where: { id },
+        data: { deletedAt: new Date() },
+      });
+      await wipeFixCode(tx, { projectId: id });
     });
   }
 }
