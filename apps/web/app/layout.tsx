@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import { SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
+import { SITE_URL } from "@/lib/site-url";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -10,8 +12,11 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Errwise", template: "%s · Errwise" },
-  description: "Error monitoring for developers.",
+  metadataBase: SITE_URL,
+  title: { default: SITE_NAME, template: `%s · ${SITE_NAME}` },
+  description: SITE_DESCRIPTION,
+  openGraph: { type: "website", siteName: SITE_NAME, locale: "en_US" },
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({

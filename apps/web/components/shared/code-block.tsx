@@ -1,6 +1,14 @@
+import { highlightLine } from "@/lib/highlight";
+import type { CodeLanguage } from "@/lib/highlight";
 import { CopyButton } from "./copy-button";
 
-export function CodeBlock({ code }: { code: string }) {
+interface Props {
+  code: string;
+  /** Plain text when not given. */
+  language?: CodeLanguage;
+}
+
+export function CodeBlock({ code, language = "text" }: Props) {
   return (
     <div className="relative rounded-lg border bg-background/60">
       <CopyButton
@@ -23,7 +31,9 @@ export function CodeBlock({ code }: { code: string }) {
               >
                 {index + 1}
               </span>
-              <span className="whitespace-pre">{line || " "}</span>
+              <span className="whitespace-pre">
+                {line ? highlightLine(line, language) : " "}
+              </span>
             </span>
           ))}
         </code>

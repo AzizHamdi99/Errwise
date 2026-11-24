@@ -14,9 +14,16 @@ export function middleware(request: NextRequest) {
     "/verify-email",
     "/forgot-password",
     "/reset-password",
+    "/docs",
+    "/terms",
+    "/privacy",
+    // Read by crawlers and social networks. It has no file extension, so the matcher runs on it.
+    "/opengraph-image",
   ];
 
-  const isPublicRoute = publicRoutes.includes(pathname);
+  // "/docs/" with the slash, so a future "/docs-internal" does not become public by accident.
+  const isPublicRoute =
+    publicRoutes.includes(pathname) || pathname.startsWith("/docs/");
 
   // Not authenticated
   if (!token && !isPublicRoute) {

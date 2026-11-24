@@ -349,5 +349,6 @@ sending a pull request. Commits follow [Conventional Commits](https://www.conven
 
 ## License
 
-The SDK, [`@errwise/node`](packages/sdk), is MIT licensed: see
-[`packages/sdk/LICENSE`](packages/sdk/LICENSE).
+The code in this repository is MIT licensed: see [`LICENSE`](LICENSE). The SDK,
+[`@errwise/node`](packages/sdk), ships with its own copy of the same license. The license covers
+the code, not the Errwise name and logo, and not the hosted service, which has its own terms.
