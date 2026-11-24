@@ -1,1 +1,92 @@
-{}
+{
+  "ai-analysis-dark": {
+    "src": "/screenshots/ai-analysis-dark.webp",
+    "width": 2880,
+    "height": 1800,
+    "blurDataURL": "data:image/webp;base64,UklGRjAAAABXRUJQVlA4ICQAAABQAQCdASoQAAoAA4BaJZwABAAAAP7zOnX1j3sOvFN1M6iXgAA="
+  },
+  "ai-analysis-light": {
+    "src": "/screenshots/ai-analysis-light.webp",
+    "width": 2880,
+    "height": 1800,
+    "blurDataURL": "data:image/webp;base64,UklGRi4AAABXRUJQVlA4ICIAAAAwAQCdASoQAAoAA4BaJaQAA3AA/vQ9KBA1OTqOepu5KAAA"
+  },
+  "alert-email": {
+    "src": "/screenshots/alert-email.webp",
+    "width": 2880,
+    "height": 1800,
+    "blurDataURL": "data:image/webp;base64,UklGRjIAAABXRUJQVlA4ICYAAAAwAQCdASoQAAoAA4BaJaQAA3AA/vPol0YFKFbnJNeqy+y21KSgAA=="
+  },
+  "github-integration-dark": {
+    "src": "/screenshots/github-integration-dark.webp",
+    "width": 2880,
+    "height": 1800,
+    "blurDataURL": "data:image/webp;base64,UklGRiwAAABXRUJQVlA4ICAAAABQAQCdASoQAAoAA4BaJZwABAAAAP7zt7aT6LqxLwAAAA=="
+  },
+  "github-integration-light": {
+    "src": "/screenshots/github-integration-light.webp",
+    "width": 2880,
+    "height": 1800,
+    "blurDataURL": "data:image/webp;base64,UklGRigAAABXRUJQVlA4IBwAAAAwAQCdASoQAAoAA4BaJaQAA3AA/vR9wtS5AAAA"
+  },
+  "issue-detail-dark": {
+    "src": "/screenshots/issue-detail-dark.webp",
+    "width": 2880,
+    "height": 1800,
+    "blurDataURL": "data:image/webp;base64,UklGRiwAAABXRUJQVlA4ICAAAABQAQCdASoQAAoAA4BaJZwABAAAAP7zfPYNAcZOkl4AAA=="
+  },
+  "issue-detail-light": {
+    "src": "/screenshots/issue-detail-light.webp",
+    "width": 2880,
+    "height": 1800,
+    "blurDataURL": "data:image/webp;base64,UklGRigAAABXRUJQVlA4IBwAAAAwAQCdASoQAAoAA4BaJaQAA3AA/vR9nGTQAAAA"
+  },
+  "issues-list-dark": {
+    "src": "/screenshots/issues-list-dark.webp",
+    "width": 2880,
+    "height": 1800,
+    "blurDataURL": "data:image/webp;base64,UklGRiwAAABXRUJQVlA4ICAAAACQAQCdASoQAAoAA4BaJZwAAudZt7gA/vaQs3ETMl4AAA=="
+  },
+  "issues-list-light": {
+    "src": "/screenshots/issues-list-light.webp",
+    "width": 2880,
+    "height": 1800,
+    "blurDataURL": "data:image/webp;base64,UklGRigAAABXRUJQVlA4IBwAAAAwAQCdASoQAAoAA4BaJaQAA3AA/vR/p0JlLkAA"
+  },
+  "project-overview-dark": {
+    "src": "/screenshots/project-overview-dark.webp",
+    "width": 2880,
+    "height": 1800,
+    "blurDataURL": "data:image/webp;base64,UklGRjwAAABXRUJQVlA4IDAAAACwAQCdASoQAAoAA4BaJZwAAudI6Y8AAP72jw+f3JdIlB/RJmNddRsYDSdb+YwAAAA="
+  },
+  "project-overview-light": {
+    "src": "/screenshots/project-overview-light.webp",
+    "width": 2880,
+    "height": 1800,
+    "blurDataURL": "data:image/webp;base64,UklGRjQAAABXRUJQVlA4ICgAAAAwAQCdASoQAAoAA4BaJZwAA3AA/vP/KdCVNofQSfvPOjHzYO1B0AAA"
+  },
+  "regression-dark": {
+    "src": "/screenshots/regression-dark.webp",
+    "width": 2880,
+    "height": 1800,
+    "blurDataURL": "data:image/webp;base64,UklGRiwAAABXRUJQVlA4ICAAAABQAQCdASoQAAoAA4BaJZwABAAAAP7z7PJHUyhIw8gAAA=="
+  },
+  "regression-light": {
+    "src": "/screenshots/regression-light.webp",
+    "width": 2880,
+    "height": 1800,
+    "blurDataURL": "data:image/webp;base64,UklGRigAAABXRUJQVlA4IBwAAAAwAQCdASoQAAoAA4BaJaQAA3AA/vR8vOYlyAAA"
+  },
+  "suggested-fix-dark": {
+    "src": "/screenshots/suggested-fix-dark.webp",
+    "width": 2880,
+    "height": 1800,
+    "blurDataURL": "data:image/webp;base64,UklGRjAAAABXRUJQVlA4ICQAAABQAQCdASoQAAoAA4BaJZwABAAAAP7ywOUv0GYitRLQ9SiXgAA="
+  },
+  "suggested-fix-light": {
+    "src": "/screenshots/suggested-fix-light.webp",
+    "width": 2880,
+    "height": 1800,
+    "blurDataURL": "data:image/webp;base64,UklGRioAAABXRUJQVlA4IB4AAAAwAQCdASoQAAoAA4BaJaQAA3AA/vQPw7tzeiRQsAA="
+  }
+}
