@@ -156,7 +156,23 @@ export function RegisterForm() {
         </div>
 
         <p className="text-xs leading-relaxed text-muted-foreground">
-          By creating an account, you agree to use Errwise responsibly.
+          By creating an account, with email or Google, you agree to the{" "}
+          <Link
+            href="/terms"
+            target="_blank"
+            className="text-foreground underline underline-offset-4"
+          >
+            Terms of Service
+          </Link>{" "}
+          and have read the{" "}
+          <Link
+            href="/privacy"
+            target="_blank"
+            className="text-foreground underline underline-offset-4"
+          >
+            Privacy Policy
+          </Link>
+          .
         </p>
 
         <Button
