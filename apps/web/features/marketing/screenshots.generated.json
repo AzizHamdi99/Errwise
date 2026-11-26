@@ -45,13 +45,13 @@
     "src": "/screenshots/issues-list-dark.webp",
     "width": 2880,
     "height": 1800,
-    "blurDataURL": "data:image/webp;base64,UklGRiwAAABXRUJQVlA4ICAAAACQAQCdASoQAAoAA4BaJZwAAudZt7gA/vaQs3ETMl4AAA=="
+    "blurDataURL": "data:image/webp;base64,UklGRjAAAABXRUJQVlA4ICQAAACwAQCdASoQAAoAA4BaJZwAAud8Px1AAP72kK570cILQl4AAAA="
   },
   "issues-list-light": {
     "src": "/screenshots/issues-list-light.webp",
     "width": 2880,
     "height": 1800,
-    "blurDataURL": "data:image/webp;base64,UklGRigAAABXRUJQVlA4IBwAAAAwAQCdASoQAAoAA4BaJaQAA3AA/vR/p0JlLkAA"
+    "blurDataURL": "data:image/webp;base64,UklGRiYAAABXRUJQVlA4IBoAAAAwAQCdASoQAAoABwBaJaQAA3AA/vRJR4IAAA=="
   },
   "project-overview-dark": {
     "src": "/screenshots/project-overview-dark.webp",
